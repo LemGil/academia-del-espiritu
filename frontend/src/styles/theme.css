@@ -1,0 +1,13 @@
+:root {
+  --teal: #1A3A4A;
+  --gold: #C9A24A;
+  --ivory: #F5F1E8;
+  --paper: #D6D0C4;
+}
+
+body {
+  margin: 0;
+  background: var(--ivory);
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--teal);
+}
