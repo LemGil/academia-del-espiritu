@@ -27,7 +27,7 @@ export default function RootApp() {
 
   async function handleLogout() {
     await logout();
-    refresh();
+    await refresh();
   }
 
   if (loading || !appReady) {
@@ -59,7 +59,7 @@ export default function RootApp() {
 
   // Admin / Instructor → panel de administración
   if (profile && (profile.rol === "admin" || profile.rol === "instructor")) {
-    return <App />;
+    return <App onLogout={handleLogout} />;
   }
 
   // Estudiante → portal del estudiante

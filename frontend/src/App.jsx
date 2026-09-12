@@ -79,7 +79,7 @@ function Topbar({ breadcrumb, children }) {
   );
 }
 
-function Sidebar({ vista, onNavigate }) {
+function Sidebar({ vista, onNavigate, onLogout }) {
   const items = [
     { icon: "ti-stack-2", label: "Niveles", key: "niveles" },
     { icon: "ti-book", label: "Cursos", key: "cursos" },
@@ -139,16 +139,37 @@ function Sidebar({ vista, onNavigate }) {
       <div style={{
         padding: "16px 20px",
         borderTop: `1px solid rgba(201,162,74,0.2)`,
-        fontSize: 11, color: COLORS.pergamino, fontStyle: "italic",
-        fontFamily: "'EB Garamond', Georgia, serif",
+        display: "flex", flexDirection: "column", gap: 8,
       }}>
-        Área administrativa
+        <div style={{
+          fontSize: 11, color: COLORS.pergamino, fontStyle: "italic",
+          fontFamily: "'EB Garamond', Georgia, serif",
+        }}>
+          Área administrativa
+        </div>
+        <button
+          onClick={onLogout}
+          style={{
+            background: "transparent",
+            color: COLORS.pergamino,
+            border: `1px solid rgba(201,162,74,0.3)`,
+            padding: "7px 12px",
+            borderRadius: 2,
+            fontFamily: "'Cinzel', serif",
+            fontSize: 10,
+            letterSpacing: "1px",
+            cursor: "pointer",
+            textAlign: "left",
+          }}
+        >
+          Cerrar sesión
+        </button>
       </div>
     </div>
   );
 }
 
-export default function App() {
+export default function App({ onLogout }) {
   const [vistaActiva, setVistaActiva] = useState("niveles");
 
   // ── Vincular perfiles ──
@@ -584,17 +605,14 @@ export default function App() {
 
   async function fetchProgreso() {
     setLoadingProgreso(true);
-    // 1. Fetch alumnos básicos
     const { data: ests } = await supabase.from("estudiantes").select("*, niveles(*)").eq("activo", true);
     setProgresoEstudiantes(ests || []);
     setLoadingProgreso(false);
   }
 
-  // Al seleccionar un estudiante, cargar detalle
   async function cargarDetalleProgreso(estudianteId) {
     setLoadingProgreso(true);
 
-    // 1. Obtener UUID del usuario desde perfiles (entregas_actividades usa UUID)
     const { data: perfil } = await supabase
       .from("perfiles")
       .select("id")
@@ -602,7 +620,6 @@ export default function App() {
       .single();
     const userId = perfil?.id;
 
-    // 2. Obtener actividades aprobadas en entregas_actividades
     let approvedActividades = [];
     if (userId) {
       const { data: entregas } = await supabase
@@ -613,10 +630,8 @@ export default function App() {
       approvedActividades = (entregas || []).map(e => e.actividad_id);
     }
 
-    // 3. Fetch niveles -> cursos -> temas -> pasos (con progreso_pasos)
     const { data: niveles } = await supabase.from("niveles").select("*, cursos(*, temas(*, pasos(*, progreso_pasos!left(*))))").order("orden");
 
-    // 4. Combinar progreso_pasos + entregas_actividades
     const detalle = niveles.map(n => ({
       ...n,
       cursos: n.cursos.map(c => ({
@@ -663,7 +678,6 @@ export default function App() {
   const [isPasoModalOpen, setIsPasoModalOpen] = useState(false);
 
   function handleNavigate(key) {
-    // Solo navegar a secciones independientes desde el sidebar
     if (["alumnos", "niveles", "perfiles", "cursos", "temas", "actividades", "progreso", "certificados"].includes(key)) {
       setVistaActiva(key);
       setSelectedNivel(null);
@@ -671,7 +685,6 @@ export default function App() {
     }
   }
 
-  // Vista calculada
   const vista = selectedCurso ? "temas"
     : selectedNivel ? "cursos"
     : vistaActiva;
@@ -757,11 +770,9 @@ export default function App() {
   } = useEstudiantes();
   const [filtroNivelAlumnos, setFiltroNivelAlumnos] = useState("");
 
-  // Resetear filtros
   useEffect(() => {
     if (!isEstudianteModalOpen) setFiltroNivelAlumnos("");
   }, [isEstudianteModalOpen]);
-
 
   // ── Crear acceso al portal ──
   const [crearAccesoEstudiante, setCrearAccesoEstudiante] = useState(null);
@@ -824,7 +835,7 @@ export default function App() {
       fontFamily: "'EB Garamond', Georgia, serif",
       background: COLORS.marfil,
     }}>
-      <Sidebar vista={vista} onNavigate={handleNavigate} />
+      <Sidebar vista={vista} onNavigate={handleNavigate} onLogout={onLogout} />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
 
