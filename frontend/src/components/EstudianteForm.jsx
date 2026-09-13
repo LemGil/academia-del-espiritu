@@ -28,6 +28,17 @@ const labelStyle = {
   letterSpacing: "0.5px",
 };
 
+const errorStyle = {
+  fontSize: 12,
+  color: "#a32d2d",
+  marginTop: 4,
+  fontFamily: "'EB Garamond', Georgia, serif",
+};
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export default function EstudianteForm({ onSave, editingEstudiante, saving, onClose, niveles = [] }) {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -37,6 +48,7 @@ export default function EstudianteForm({ onSave, editingEstudiante, saving, onCl
     fecha_ingreso: "",
     nivel_id: "",
   });
+  const [formError, setFormError] = useState(null);
 
   useEffect(() => {
     if (editingEstudiante) {
@@ -51,6 +63,7 @@ export default function EstudianteForm({ onSave, editingEstudiante, saving, onCl
     } else {
       setFormData({ nombre: "", apellido: "", email: "", telefono: "", fecha_ingreso: "", nivel_id: "" });
     }
+    setFormError(null);
   }, [editingEstudiante]);
 
   const handleChange = (e) => {
@@ -60,6 +73,21 @@ export default function EstudianteForm({ onSave, editingEstudiante, saving, onCl
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormError(null);
+
+    if (!formData.nombre.trim()) {
+      setFormError("El nombre es obligatorio.");
+      return;
+    }
+    if (!formData.apellido.trim()) {
+      setFormError("El apellido es obligatorio.");
+      return;
+    }
+    if (formData.email && !isValidEmail(formData.email)) {
+      setFormError("El correo electrónico no tiene un formato válido.");
+      return;
+    }
+
     const payload = {
       ...formData,
       nivel_id: formData.nivel_id ? parseInt(formData.nivel_id) : null,
@@ -80,7 +108,6 @@ export default function EstudianteForm({ onSave, editingEstudiante, saving, onCl
             onChange={handleChange}
             placeholder="Ej: Juan"
             style={inputStyle}
-            required
           />
         </div>
         <div>
@@ -92,7 +119,6 @@ export default function EstudianteForm({ onSave, editingEstudiante, saving, onCl
             onChange={handleChange}
             placeholder="Ej: Pérez"
             style={inputStyle}
-            required
           />
         </div>
       </div>
@@ -100,7 +126,7 @@ export default function EstudianteForm({ onSave, editingEstudiante, saving, onCl
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>Email</label>
         <input
-          type="email"
+          type="text"
           name="email"
           value={formData.email}
           onChange={handleChange}
@@ -146,6 +172,8 @@ export default function EstudianteForm({ onSave, editingEstudiante, saving, onCl
           ))}
         </select>
       </div>
+
+      {formError && <p style={errorStyle}>{formError}</p>}
 
       <div style={{ display: "flex", gap: 10 }}>
         <button

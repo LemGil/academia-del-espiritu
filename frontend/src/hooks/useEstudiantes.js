@@ -11,13 +11,20 @@ export function useEstudiantes() {
   const [estudiantes, setEstudiantes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [editingEstudiante, setEditingEstudiante] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   async function fetchEstudiantes() {
     setLoading(true);
+    setError(null);
     const { data, error } = await getEstudiantes();
-    if (error) console.error("Error cargando estudiantes:", error.message);
+    if (error) {
+      setError("No se pudieron cargar los estudiantes.");
+      setEstudiantes([]);
+      setLoading(false);
+      return;
+    }
 
     const estudiantesRaw = data || [];
 
@@ -43,23 +50,37 @@ export function useEstudiantes() {
 
   async function addEstudiante(estudiante) {
     setSaving(true);
+    setError(null);
     const { error } = await createEstudiante(estudiante);
-    if (error) console.error("Error creando estudiante:", error.message);
+    if (error) {
+      setError("No se pudo crear el estudiante.");
+      setSaving(false);
+      return;
+    }
     await fetchEstudiantes();
     setSaving(false);
   }
 
   async function editEstudiante(id, updates) {
     setSaving(true);
+    setError(null);
     const { error } = await updateEstudiante(id, updates);
-    if (error) console.error("Error actualizando estudiante:", error.message);
+    if (error) {
+      setError("No se pudo actualizar el estudiante.");
+      setSaving(false);
+      return;
+    }
     await fetchEstudiantes();
     setSaving(false);
   }
 
   async function removeEstudiante(id) {
+    setError(null);
     const { error } = await deleteEstudiante(id);
-    if (error) console.error("Error eliminando estudiante:", error.message);
+    if (error) {
+      setError("No se pudo eliminar el estudiante.");
+      return;
+    }
     await fetchEstudiantes();
   }
 
@@ -82,6 +103,7 @@ export function useEstudiantes() {
     estudiantes,
     loading,
     saving,
+    error,
     addEstudiante,
     editEstudiante,
     removeEstudiante,

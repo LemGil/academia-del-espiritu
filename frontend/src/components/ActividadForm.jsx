@@ -28,15 +28,23 @@ const labelStyle = {
   letterSpacing: "0.5px",
 };
 
+const errorStyle = {
+  fontSize: 12,
+  color: "#a32d2d",
+  marginTop: 4,
+  fontFamily: "'EB Garamond', Georgia, serif",
+};
+
 export default function ActividadForm({ onSave, editingActividad, saving, onClose, niveles = [], cursos = [], temas = [] }) {
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
     tema_id: "",
-    tipo: "leer_texto", // Default
+    tipo: "leer_texto",
   });
   const [nivelTemp, setNivelTemp] = useState("");
   const [cursoTemp, setCursoTemp] = useState("");
+  const [formError, setFormError] = useState(null);
 
   const tipos = [
     { value: "leer_texto", label: "Confirmar lectura" },
@@ -46,7 +54,6 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
     { value: "bautizarse", label: "Bautizarse (Manual)" },
     { value: "otro", label: "Acción libre" },
   ];
-
 
   const filteredCursos = useMemo(() => {
     if (!nivelTemp || !cursos.length) return [];
@@ -77,6 +84,7 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
       setNivelTemp("");
       setCursoTemp("");
     }
+    setFormError(null);
   }, [editingActividad, temas, cursos]);
 
   const handleChange = (e) => {
@@ -86,6 +94,25 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormError(null);
+
+    if (!nivelTemp) {
+      setFormError("Debes seleccionar un nivel.");
+      return;
+    }
+    if (!cursoTemp) {
+      setFormError("Debes seleccionar un curso.");
+      return;
+    }
+    if (!formData.tema_id) {
+      setFormError("Debes seleccionar un tema.");
+      return;
+    }
+    if (!formData.titulo.trim()) {
+      setFormError("El título de la actividad es obligatorio.");
+      return;
+    }
+
     onSave(formData);
   };
 
@@ -102,7 +129,6 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
             setFormData((prev) => ({ ...prev, tema_id: "" }));
           }}
           style={inputStyle}
-          required
         >
           <option value="">Seleccionar nivel...</option>
           {niveles.map((n) => (
@@ -120,7 +146,6 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
             setFormData((prev) => ({ ...prev, tema_id: "" }));
           }}
           style={inputStyle}
-          required
           disabled={!nivelTemp}
         >
           <option value="">{nivelTemp ? "Seleccionar curso..." : "Primero selecciona un nivel"}</option>
@@ -137,7 +162,6 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
           value={formData.tema_id}
           onChange={handleChange}
           style={inputStyle}
-          required
           disabled={!cursoTemp}
         >
           <option value="">{cursoTemp ? "Seleccionar tema..." : "Primero selecciona un curso"}</option>
@@ -154,7 +178,6 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
           value={formData.tipo}
           onChange={handleChange}
           style={inputStyle}
-          required
         >
           {tipos.map((t) => (
             <option key={t.value} value={t.value}>{t.label}</option>
@@ -171,7 +194,6 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
           onChange={handleChange}
           placeholder="Ej: Reflexión personal"
           style={inputStyle}
-          required
         />
       </div>
 
@@ -186,6 +208,8 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
           style={{ ...inputStyle, resize: "vertical" }}
         />
       </div>
+
+      {formError && <p style={errorStyle}>{formError}</p>}
 
       <div style={{ display: "flex", gap: 10, position: "sticky", bottom: -28, background: "#F5F1E8", padding: "15px 0", borderTop: "1px solid #D6D0C4" }}>
         <button

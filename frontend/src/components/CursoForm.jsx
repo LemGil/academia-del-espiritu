@@ -28,6 +28,13 @@ const labelStyle = {
   letterSpacing: "0.5px",
 };
 
+const errorStyle = {
+  fontSize: 12,
+  color: "#a32d2d",
+  marginTop: 4,
+  fontFamily: "'EB Garamond', Georgia, serif",
+};
+
 export default function CursoForm({ onSave, editingCurso, saving, onClose, niveles = [] }) {
   const [formData, setFormData] = useState({
     titulo: "",
@@ -38,6 +45,7 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
   });
   const imagenFileRef = useRef(null);
   const [preview, setPreview] = useState(null);
+  const [formError, setFormError] = useState(null);
 
   useEffect(() => {
     if (editingCurso) {
@@ -54,6 +62,7 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
       setPreview(null);
     }
     imagenFileRef.current = null;
+    setFormError(null);
   }, [editingCurso]);
 
   const handleChange = (e) => {
@@ -70,7 +79,17 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("imagenFile ref:", imagenFileRef.current);
+    setFormError(null);
+
+    if (!formData.titulo.trim()) {
+      setFormError("El título del curso es obligatorio.");
+      return;
+    }
+    if (niveles.length > 0 && !formData.nivel_id) {
+      setFormError("Debes seleccionar un nivel.");
+      return;
+    }
+
     onSave(formData, imagenFileRef.current);
   };
 
@@ -86,7 +105,6 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
           onChange={handleChange}
           placeholder="Ej: Fundamentos de meditación"
           style={inputStyle}
-          required
         />
       </div>
 
@@ -122,7 +140,6 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
             value={formData.nivel_id}
             onChange={handleChange}
             style={inputStyle}
-            required={niveles.length > 0}
           >
             <option value="">Seleccionar nivel...</option>
             {niveles.map((n) => (
@@ -164,6 +181,8 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
           style={{ ...inputStyle, resize: "vertical" }}
         />
       </div>
+
+      {formError && <p style={errorStyle}>{formError}</p>}
 
       <div style={{ display: "flex", gap: 10, position: "sticky", bottom: -28, background: "#F5F1E8", padding: "15px 0", borderTop: "1px solid #D6D0C4" }}>
         <button

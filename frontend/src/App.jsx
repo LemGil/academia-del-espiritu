@@ -508,13 +508,16 @@ export default function App({ onLogout }) {
 
   async function handleSaveActividad(formData) {
     setActividadSaving(true);
-    console.log("Guardando actividad:", formData, "Editando:", editingActividad);
     try {
+      const payload = {
+        ...formData,
+        tema_id: formData.tema_id ? parseInt(formData.tema_id) : null,
+      };
       if (editingActividad) {
-        const { error } = await supabase.from("pasos").update(formData).eq("id", editingActividad.id);
+        const { error } = await supabase.from("pasos").update(payload).eq("id", editingActividad.id);
         if (error) console.error("Error al actualizar:", error);
       } else {
-        const { error } = await supabase.from("pasos").insert([formData]);
+        const { error } = await supabase.from("pasos").insert([payload]);
         if (error) console.error("Error al insertar:", error);
       }
       await fetchActividades();

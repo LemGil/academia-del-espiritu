@@ -28,18 +28,38 @@ const labelStyle = {
   letterSpacing: "0.5px",
 };
 
+const errorStyle = {
+  fontSize: 12,
+  color: "#a32d2d",
+  marginTop: 4,
+  fontFamily: "'EB Garamond', Georgia, serif",
+};
+
+const sectionDividerStyle = {
+  margin: "20px 0 16px",
+  paddingBottom: 8,
+  borderBottom: `1px solid ${COLORS.pergamino}`,
+  fontSize: 10,
+  fontFamily: "'Cinzel', serif",
+  color: COLORS.oro,
+  letterSpacing: "2px",
+  textTransform: "uppercase",
+};
+
 export default function TemaForm({ onSave, editingTema, saving, onClose, niveles = [], cursos = [] }) {
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
-    contenido: "",
+    contenido: "",       // PDF de clase (Google Drive u otra URL)
     video_url: "",
-    pdf_url: "",
-    titulo_descarga: "",
+    pdf_url: "",         // Material adicional
+    titulo_descarga: "", // Título del material adicional
+    pdf_premium: false,  // Material adicional exclusivo (membresía futura)
     orden: 0,
     curso_id: "",
   });
   const [nivelTemp, setNivelTemp] = useState("");
+  const [formError, setFormError] = useState(null);
 
   const filteredCursos = useMemo(() => {
     if (!nivelTemp || !cursos.length) return [];
@@ -56,29 +76,53 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
         video_url: editingTema.video_url || "",
         pdf_url: editingTema.pdf_url || "",
         titulo_descarga: editingTema.titulo_descarga || "",
+        pdf_premium: editingTema.pdf_premium || false,
         orden: editingTema.orden ?? 0,
         curso_id: editingTema.curso_id || "",
       });
       setNivelTemp(cursoEncontrado?.nivel_id?.toString() || "");
     } else {
-      setFormData({ titulo: "", descripcion: "", contenido: "", video_url: "", pdf_url: "", titulo_descarga: "", orden: 0, curso_id: "" });
+      setFormData({
+        titulo: "", descripcion: "", contenido: "", video_url: "",
+        pdf_url: "", titulo_descarga: "", pdf_premium: false, orden: 0, curso_id: "",
+      });
       setNivelTemp("");
     }
+    setFormError(null);
   }, [editingTema]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormError(null);
+
+    if (!formData.titulo.trim()) {
+      setFormError("El título del tema es obligatorio.");
+      return;
+    }
+    if (niveles.length > 0 && !nivelTemp) {
+      setFormError("Debes seleccionar un nivel.");
+      return;
+    }
+    if (niveles.length > 0 && !formData.curso_id) {
+      setFormError("Debes seleccionar un curso.");
+      return;
+    }
+
     onSave(formData);
   };
 
   return (
     <form onSubmit={handleSubmit}>
 
+      {/* Nivel y Curso */}
       {niveles.length > 0 && (
         <>
           <div style={{ marginBottom: 16 }}>
@@ -90,7 +134,6 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
                 setFormData((prev) => ({ ...prev, curso_id: "" }));
               }}
               style={inputStyle}
-              required={niveles.length > 0}
             >
               <option value="">Seleccionar nivel...</option>
               {niveles.map((n) => (
@@ -106,7 +149,6 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
               value={formData.curso_id}
               onChange={handleChange}
               style={inputStyle}
-              required={niveles.length > 0}
               disabled={!nivelTemp}
             >
               <option value="">{nivelTemp ? "Seleccionar curso..." : "Primero selecciona un nivel"}</option>
@@ -118,6 +160,7 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
         </>
       )}
 
+      {/* Datos principales */}
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>Título del Tema</label>
         <input
@@ -127,7 +170,6 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
           onChange={handleChange}
           placeholder="Ej: La creación como acto simbólico"
           style={inputStyle}
-          required
         />
       </div>
 
@@ -144,16 +186,19 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Enlace PDF de clase (Google Drive)</label>
+        <label style={labelStyle}>Orden</label>
         <input
-          type="url"
-          name="contenido"
-          value={formData.contenido}
+          type="number"
+          name="orden"
+          value={formData.orden}
           onChange={handleChange}
-          placeholder="https://drive.google.com/file/d/..."
-          style={inputStyle}
+          min={0}
+          style={{ ...inputStyle, width: 100 }}
         />
       </div>
+
+      {/* Sección: Contenido multimedia */}
+      <div style={sectionDividerStyle}>Contenido Multimedia</div>
 
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>URL de Video (YouTube / Vimeo)</label>
@@ -168,42 +213,96 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>URL de PDF</label>
+        <label style={labelStyle}>PDF de Clase</label>
+        <input
+          type="url"
+          name="contenido"
+          value={formData.contenido}
+          onChange={handleChange}
+          placeholder="https://drive.google.com/file/d/... o cualquier URL de PDF"
+          style={inputStyle}
+        />
+        <p style={{ margin: "5px 0 0", fontSize: 11, color: "#999", fontStyle: "italic" }}>
+          Acepta Google Drive, Dropbox u otra URL directa al PDF.
+        </p>
+      </div>
+
+      {/* Sección: Material adicional */}
+      <div style={sectionDividerStyle}>Material Adicional</div>
+
+      <div style={{ marginBottom: 16 }}>
+        <label style={labelStyle}>URL del Material (PDF, libro, aplicación)</label>
         <input
           type="url"
           name="pdf_url"
           value={formData.pdf_url}
           onChange={handleChange}
-          placeholder="https://..."
+          placeholder="https://drive.google.com/file/d/... o cualquier URL"
           style={inputStyle}
         />
+        <p style={{ margin: "5px 0 0", fontSize: 11, color: "#999", fontStyle: "italic" }}>
+          Acepta Google Drive, Dropbox u otra URL directa.
+        </p>
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Título del material descargable</label>
+        <label style={labelStyle}>Título del Material</label>
         <input
           type="text"
           name="titulo_descarga"
           value={formData.titulo_descarga}
           onChange={handleChange}
-          placeholder="Ej: LIBRO: LOS PASOS DEL CANGREJO"
+          placeholder="Ej: LIBRO: Los pasos del cangrejo"
           style={inputStyle}
         />
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <label style={labelStyle}>Orden</label>
-        <input
-          type="number"
-          name="orden"
-          value={formData.orden}
-          onChange={handleChange}
-          min={0}
-          style={{ ...inputStyle, width: 100 }}
-        />
+      {/* Checkbox membresía */}
+      <div style={{
+        marginBottom: 24,
+        padding: "12px 14px",
+        background: formData.pdf_premium ? "rgba(201,162,74,0.08)" : "transparent",
+        border: `1px solid ${formData.pdf_premium ? COLORS.oro : COLORS.pergamino}`,
+        borderRadius: 2,
+        transition: "all 0.2s",
+      }}>
+        <label style={{
+          display: "flex", alignItems: "flex-start", gap: 10,
+          cursor: "pointer",
+        }}>
+          <input
+            type="checkbox"
+            name="pdf_premium"
+            checked={formData.pdf_premium}
+            onChange={handleChange}
+            style={{ marginTop: 2, accentColor: COLORS.oro, cursor: "pointer" }}
+          />
+          <div>
+            <span style={{
+              fontSize: 12, fontFamily: "'Cinzel', serif",
+              color: COLORS.teal, letterSpacing: "0.5px",
+            }}>
+              Material exclusivo (membresía)
+            </span>
+            <p style={{
+              margin: "3px 0 0", fontSize: 11, color: "#999",
+              fontStyle: "italic", fontFamily: "'EB Garamond', Georgia, serif",
+            }}>
+              Reservado para miembros con acceso especial. La restricción se activará en una versión futura.
+            </p>
+          </div>
+        </label>
       </div>
 
-      <div style={{ display: "flex", gap: 10, position: "sticky", bottom: -28, background: "#F5F1E8", padding: "15px 0", borderTop: "1px solid #D6D0C4" }}>
+      {formError && <p style={errorStyle}>{formError}</p>}
+
+      {/* Botones */}
+      <div style={{
+        display: "flex", gap: 10,
+        position: "sticky", bottom: -28,
+        background: "#F5F1E8", padding: "15px 0",
+        borderTop: "1px solid #D6D0C4",
+      }}>
         <button
           type="submit"
           disabled={saving}

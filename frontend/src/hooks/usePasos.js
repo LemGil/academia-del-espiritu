@@ -10,6 +10,7 @@ export function usePasos(temas = []) {
   const [pasos, setPasos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [editingPaso, setEditingPaso] = useState(null);
 
   const temaIds = temas.map((t) => t.id);
@@ -21,8 +22,9 @@ export function usePasos(temas = []) {
       return;
     }
     setLoading(true);
+    setError(null);
     const { data, error } = await getPasosPorTemas(temaIds);
-    if (error) console.error("Error cargando pasos:", error.message);
+    if (error) setError("No se pudieron cargar los pasos.");
     setPasos(data || []);
     setLoading(false);
   }
@@ -33,24 +35,38 @@ export function usePasos(temas = []) {
 
   async function addPaso(temaId, formData) {
     setSaving(true);
+    setError(null);
     const payload = { ...formData, tema_id: temaId };
     const { error } = await createPaso(payload);
-    if (error) console.error("Error creando paso:", error.message);
+    if (error) {
+      setError("No se pudo crear el paso.");
+      setSaving(false);
+      return;
+    }
     await fetchPasos();
     setSaving(false);
   }
 
   async function editPaso(id, updates) {
     setSaving(true);
+    setError(null);
     const { error } = await updatePaso(id, updates);
-    if (error) console.error("Error actualizando paso:", error.message);
+    if (error) {
+      setError("No se pudo actualizar el paso.");
+      setSaving(false);
+      return;
+    }
     await fetchPasos();
     setSaving(false);
   }
 
   async function removePaso(id) {
+    setError(null);
     const { error } = await deletePaso(id);
-    if (error) console.error("Error eliminando paso:", error.message);
+    if (error) {
+      setError("No se pudo eliminar el paso.");
+      return;
+    }
     await fetchPasos();
   }
 
@@ -62,7 +78,6 @@ export function usePasos(temas = []) {
     setEditingPaso(null);
   }
 
-  // Agrupa pasos por tema_id
   const pasosPorTema = pasos.reduce((acc, paso) => {
     if (!acc[paso.tema_id]) acc[paso.tema_id] = [];
     acc[paso.tema_id].push(paso);
@@ -74,6 +89,7 @@ export function usePasos(temas = []) {
     pasosPorTema,
     loading,
     saving,
+    error,
     addPaso,
     editPaso,
     removePaso,

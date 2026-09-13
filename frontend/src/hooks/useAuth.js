@@ -26,7 +26,13 @@ export function useAuth() {
       .select("*, estudiantes(*)")
       .single();
 
+    // Si el perfil ya existe (conflicto de PK), lo recuperamos en lugar de fallar
     if (insertError) {
+      if (insertError.code === "23505") {
+        // Duplicate key — el perfil fue creado entre el SELECT y el INSERT
+        const { data: perfilExistente } = await getProfile(currentUser.id);
+        return perfilExistente || null;
+      }
       console.error("Error creando perfil automático:", insertError.message);
       return null;
     }

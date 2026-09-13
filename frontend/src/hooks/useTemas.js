@@ -10,6 +10,7 @@ export function useTemas(cursoId = null) {
   const [temas, setTemas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [editingTema, setEditingTema] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -20,8 +21,9 @@ export function useTemas(cursoId = null) {
       return;
     }
     setLoading(true);
+    setError(null);
     const { data, error } = await getTemas(cursoId);
-    if (error) console.error("Error cargando temas:", error.message);
+    if (error) setError("No se pudieron cargar los temas.");
     setTemas(data || []);
     setLoading(false);
   }
@@ -32,24 +34,38 @@ export function useTemas(cursoId = null) {
 
   async function addTema(tema) {
     setSaving(true);
+    setError(null);
     const payload = { ...tema, curso_id: cursoId };
     const { error } = await createTema(payload);
-    if (error) console.error("Error creando tema:", error.message);
+    if (error) {
+      setError("No se pudo crear el tema.");
+      setSaving(false);
+      return;
+    }
     await fetchTemas();
     setSaving(false);
   }
 
   async function editTema(id, updates) {
     setSaving(true);
+    setError(null);
     const { error } = await updateTema(id, updates);
-    if (error) console.error("Error actualizando tema:", error.message);
+    if (error) {
+      setError("No se pudo actualizar el tema.");
+      setSaving(false);
+      return;
+    }
     await fetchTemas();
     setSaving(false);
   }
 
   async function removeTema(id) {
+    setError(null);
     const { error } = await deleteTema(id);
-    if (error) console.error("Error eliminando tema:", error.message);
+    if (error) {
+      setError("No se pudo eliminar el tema.");
+      return;
+    }
     await fetchTemas();
   }
 
@@ -72,6 +88,7 @@ export function useTemas(cursoId = null) {
     temas,
     loading,
     saving,
+    error,
     addTema,
     editTema,
     removeTema,

@@ -30,13 +30,15 @@ export function useCursos(nivelId = null) {
   const [cursos, setCursos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [editingCurso, setEditingCurso] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   async function fetchCursos() {
     setLoading(true);
+    setError(null);
     const { data, error } = await getCursos(nivelId);
-    if (error) console.error("Error cargando cursos:", error.message);
+    if (error) setError("No se pudieron cargar los cursos.");
     setCursos(data || []);
     setLoading(false);
   }
@@ -47,18 +49,17 @@ export function useCursos(nivelId = null) {
 
   async function addCurso(curso, imagenFile) {
     setSaving(true);
+    setError(null);
 
-    // Primero creamos el curso para tener el id
     const payload = { ...curso, nivel_id: nivelId };
     const { data: nuevoCurso, error } = await createCurso(payload);
 
     if (error) {
-      console.error("Error creando curso:", error.message);
+      setError("No se pudo crear el curso.");
       setSaving(false);
       return;
     }
 
-    // Si hay imagen, la subimos y actualizamos imagen_url
     if (imagenFile && nuevoCurso?.id) {
       const url = await subirImagen(imagenFile, nuevoCurso.id);
       if (url) {
@@ -72,25 +73,33 @@ export function useCursos(nivelId = null) {
 
   async function editCurso(id, updates, imagenFile) {
     setSaving(true);
+    setError(null);
 
     let imagen_url = updates.imagen_url;
 
-    // Si hay imagen nueva, la subimos primero
     if (imagenFile) {
       const url = await subirImagen(imagenFile, id);
       if (url) imagen_url = url;
     }
- console.log("Guardando imagen_url:", imagen_url); // ← agrega esto
+
     const { error } = await updateCurso(id, { ...updates, imagen_url });
-    if (error) console.error("Error actualizando curso:", error.message);
+    if (error) {
+      setError("No se pudo actualizar el curso.");
+      setSaving(false);
+      return;
+    }
 
     await fetchCursos();
     setSaving(false);
   }
 
   async function removeCurso(id) {
+    setError(null);
     const { error } = await deleteCurso(id);
-    if (error) console.error("Error eliminando curso:", error.message);
+    if (error) {
+      setError("No se pudo eliminar el curso.");
+      return;
+    }
     await fetchCursos();
   }
 
@@ -113,6 +122,7 @@ export function useCursos(nivelId = null) {
     cursos,
     loading,
     saving,
+    error,
     addCurso,
     editCurso,
     removeCurso,
@@ -122,21 +132,4 @@ export function useCursos(nivelId = null) {
     startCreate,
     closeModal,
   };
-async function subirImagen(file, cursoId) {
-  const ext = file.name.split(".").pop();
-  const path = `${cursoId}-${Date.now()}.${ext}`;
-
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, { upsert: true });
-
-  if (error) {
-    console.error("Error subiendo imagen:", error.message);
-    return null;
-  }
-
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  console.log("URL generada:", data.publicUrl); // ← agrega esto
-  return data.publicUrl;
-}
 }

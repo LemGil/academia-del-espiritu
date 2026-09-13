@@ -9,14 +9,16 @@ import {
 export function useNiveles() {
   const [niveles, setNiveles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);  // ← faltaba
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [editingNivel, setEditingNivel] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   async function fetchNiveles() {
     setLoading(true);
+    setError(null);
     const { data, error } = await getNiveles();
-    if (error) console.error(error);
+    if (error) setError("No se pudieron cargar los niveles.");
     setNiveles(data || []);
     setLoading(false);
   }
@@ -25,24 +27,37 @@ export function useNiveles() {
 
   async function addNivel(nivel) {
     setSaving(true);
-    console.log("Creating nivel with data:", nivel);
+    setError(null);
     const { error } = await createNivel(nivel);
-    if (error) console.error("Error creando nivel:", error.message);
+    if (error) {
+      setError("No se pudo crear el nivel.");
+      setSaving(false);
+      return;
+    }
     await fetchNiveles();
     setSaving(false);
   }
 
   async function editNivel(id, updates) {
     setSaving(true);
-    console.log("Updating nivel", id, "with:", updates);
+    setError(null);
     const { error } = await updateNivel(id, updates);
-    if (error) console.error("Error actualizando nivel:", error.message);
+    if (error) {
+      setError("No se pudo actualizar el nivel.");
+      setSaving(false);
+      return;
+    }
     await fetchNiveles();
     setSaving(false);
   }
 
   async function removeNivel(id) {
-    await deleteNivel(id);
+    setError(null);
+    const { error } = await deleteNivel(id);
+    if (error) {
+      setError("No se pudo eliminar el nivel.");
+      return;
+    }
     await fetchNiveles();
   }
 
@@ -65,6 +80,7 @@ export function useNiveles() {
     niveles,
     loading,
     saving,
+    error,
     addNivel,
     editNivel,
     removeNivel,

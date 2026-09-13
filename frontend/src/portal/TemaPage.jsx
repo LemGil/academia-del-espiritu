@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, ChevronRight } from "lucide-react";
+import { ArrowLeft, FileText, Download, Maximize2, X, ExternalLink } from "lucide-react";
 import { marcarPasoCompletado, getProgresoPasos } from "../services/progresoService";
 import { getPreguntasPorPasos } from "../services/preguntasService";
 import { getPasosPorTemas } from "../services/pasosService";
@@ -24,13 +24,22 @@ function getEmbedUrl(url) {
   return url;
 }
 
-function getGoogleDriveEmbedUrl(url) {
-  if (!url) return "";
+function getGoogleDriveFileId(url) {
+  if (!url) return null;
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (!match) return "";
-  const prefix = url.match(/^(https?:\/\/[^\/]+\/[^\/]+)/);
-  if (prefix) return `${prefix[1]}/d/${match[1]}/preview`;
-  return `https://drive.google.com/file/d/${match[1]}/preview`;
+  return match ? match[1] : null;
+}
+
+function getGoogleDriveEmbedUrl(url) {
+  const id = getGoogleDriveFileId(url);
+  if (!id) return url; // URL directa, usarla tal cual
+  return `https://drive.google.com/file/d/${id}/preview`;
+}
+
+function getDownloadUrl(url) {
+  const id = getGoogleDriveFileId(url);
+  if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
+  return url; // URL directa — descargar/abrir tal cual
 }
 
 function SectionTitle({ children }) {
@@ -44,6 +53,199 @@ function SectionTitle({ children }) {
     }}>
       {children}
     </div>
+  );
+}
+
+// Bloque PDF reutilizable: embed + modo lectura + descarga
+function PDFBlock({ url, titulo, etiqueta = "PDF" }) {
+  const [modoLectura, setModoLectura] = useState(false);
+  const embedUrl = getGoogleDriveEmbedUrl(url);
+  const downloadUrl = getDownloadUrl(url);
+
+  return (
+    <>
+      <section style={{ marginBottom: 28 }}>
+        <SectionTitle>{etiqueta}</SectionTitle>
+        {titulo && (
+          <p style={{
+            fontSize: 13, color: COLORS.teal,
+            fontFamily: "'Cinzel', serif", fontWeight: 600,
+            margin: "0 0 12px", letterSpacing: "0.5px",
+          }}>
+            {titulo}
+          </p>
+        )}
+
+        {/* Embed preview */}
+        <div style={{
+          width: "100%", height: 320,
+          border: `1px solid ${COLORS.pergamino}`,
+          borderRadius: 4, overflow: "hidden",
+          position: "relative", background: "#f0ece4",
+        }}>
+          <iframe
+            src={embedUrl}
+            title={titulo || etiqueta}
+            width="100%"
+            height="100%"
+            style={{ border: "none", display: "block" }}
+            allowFullScreen
+          />
+        </div>
+
+        {/* Acciones */}
+        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <button
+            onClick={() => setModoLectura(true)}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              padding: "9px 16px",
+              background: COLORS.teal,
+              color: COLORS.marfil,
+              border: "none",
+              borderRadius: 2,
+              cursor: "pointer",
+              fontFamily: "'Cinzel', serif",
+              fontSize: 11, letterSpacing: "1px",
+              fontWeight: 600,
+            }}
+          >
+            <Maximize2 size={13} />
+            Modo lectura
+          </button>
+          <a
+            href={downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              padding: "9px 16px",
+              background: "white",
+              color: COLORS.teal,
+              border: `1px solid ${COLORS.pergamino}`,
+              borderRadius: 2,
+              textDecoration: "none",
+              fontFamily: "'Cinzel', serif",
+              fontSize: 11, letterSpacing: "1px",
+              fontWeight: 600,
+            }}
+          >
+            <Download size={13} style={{ color: COLORS.oro }} />
+            Descargar
+          </a>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              padding: "9px 16px",
+              background: "white",
+              color: COLORS.teal,
+              border: `1px solid ${COLORS.pergamino}`,
+              borderRadius: 2,
+              textDecoration: "none",
+              fontFamily: "'Cinzel', serif",
+              fontSize: 11, letterSpacing: "1px",
+              fontWeight: 600,
+            }}
+          >
+            <ExternalLink size={13} style={{ color: COLORS.oro }} />
+            Abrir
+          </a>
+        </div>
+      </section>
+
+      {/* Modal modo lectura */}
+      {modoLectura && (
+        <div
+          onClick={() => setModoLectura(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            background: "rgba(26,58,74,0.92)",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%", maxWidth: 900,
+              height: "90vh",
+              display: "flex", flexDirection: "column",
+              background: "white",
+              borderRadius: 4,
+              overflow: "hidden",
+              border: `2px solid ${COLORS.oro}`,
+            }}
+          >
+            {/* Modal header */}
+            <div style={{
+              display: "flex", alignItems: "center",
+              justifyContent: "space-between",
+              padding: "12px 20px",
+              background: COLORS.teal,
+              borderBottom: `1px solid ${COLORS.oro}`,
+              flexShrink: 0,
+            }}>
+              <span style={{
+                fontFamily: "'Cinzel', serif",
+                fontSize: 12, color: COLORS.marfil,
+                letterSpacing: "1px",
+              }}>
+                {titulo || etiqueta}
+              </span>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <a
+                  href={downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "6px 12px",
+                    background: "rgba(255,255,255,0.1)",
+                    color: COLORS.pergamino,
+                    border: `1px solid rgba(255,255,255,0.2)`,
+                    borderRadius: 2,
+                    textDecoration: "none",
+                    fontFamily: "'Cinzel', serif",
+                    fontSize: 10, letterSpacing: "1px",
+                  }}
+                >
+                  <Download size={11} />
+                  Descargar
+                </a>
+                <button
+                  onClick={() => setModoLectura(false)}
+                  style={{
+                    background: "rgba(255,255,255,0.1)",
+                    border: `1px solid rgba(255,255,255,0.2)`,
+                    color: COLORS.pergamino,
+                    borderRadius: 2,
+                    padding: "6px 10px",
+                    cursor: "pointer",
+                    display: "flex", alignItems: "center",
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* iframe fullsize */}
+            <iframe
+              src={embedUrl}
+              title={titulo || etiqueta}
+              width="100%"
+              height="100%"
+              style={{ border: "none", flex: 1, display: "block" }}
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -274,6 +476,7 @@ export default function TemaPage({ estudiante }) {
       {/* Content */}
       <div style={{ flex: 1, overflowY: "auto", padding: "28px 20px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
+
           {/* Video */}
           {tema.video_url && (
             <section style={{ marginBottom: 28 }}>
@@ -296,60 +499,22 @@ export default function TemaPage({ estudiante }) {
             </section>
           )}
 
-          {/* Google Drive PDF */}
-          {tema.contenido && getGoogleDriveEmbedUrl(tema.contenido) && (
-            <section style={{ marginBottom: 28 }}>
-              <SectionTitle>PDF de Clase</SectionTitle>
-              <div style={{
-                width: "100%",
-                border: `1px solid ${COLORS.pergamino}`,
-                borderRadius: 4,
-                overflow: "hidden",
-              }}>
-                <iframe
-                  src={getGoogleDriveEmbedUrl(tema.contenido)}
-                  title="PDF de clase"
-                  width="100%"
-                  height="500"
-                  style={{ border: "none", minHeight: 500 }}
-                  allowFullScreen
-                />
-              </div>
-            </section>
+          {/* PDF de Clase */}
+          {tema.contenido && (
+            <PDFBlock
+              url={tema.contenido}
+              titulo={null}
+              etiqueta="PDF de Clase"
+            />
           )}
 
-          {/* PDF Download */}
+          {/* Material Adicional */}
           {tema.pdf_url && (
-            <section style={{ marginBottom: 28 }}>
-              <SectionTitle>Documento</SectionTitle>
-              {tema.titulo_descarga && (
-                <p style={{
-                  fontSize: 13, color: COLORS.teal,
-                  fontFamily: "'Cinzel', serif", fontWeight: 600,
-                  margin: "0 0 10px",
-                }}>
-                  {tema.titulo_descarga}
-                </p>
-              )}
-              <a
-                href={tema.pdf_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 10,
-                  padding: "12px 20px", background: "white",
-                  border: `1px solid ${COLORS.pergamino}`,
-                  borderLeft: `3px solid ${COLORS.oro}`,
-                  borderRadius: "0 4px 4px 0",
-                  textDecoration: "none", color: COLORS.teal,
-                  fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "1px",
-                }}
-              >
-                <FileText size={16} style={{ color: COLORS.oro }} />
-                Abrir documento PDF
-                <ChevronRight size={14} style={{ color: COLORS.oro }} />
-              </a>
-            </section>
+            <PDFBlock
+              url={tema.pdf_url}
+              titulo={tema.titulo_descarga || null}
+              etiqueta="Material Adicional"
+            />
           )}
 
           {/* Pasos */}
