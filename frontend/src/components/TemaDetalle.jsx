@@ -25,6 +25,18 @@ const TIPO_COLORS = {
   otro: "#276749",
 };
 
+const SectionTitle = ({ children }) => (
+  <div style={{
+    fontSize: 10, color: COLORS.oro,
+    fontFamily: "'Cinzel', serif",
+    letterSpacing: "2px", textTransform: "uppercase",
+    marginBottom: 12, paddingBottom: 8,
+    borderBottom: `1px solid ${COLORS.pergamino}`,
+  }}>
+    {children}
+  </div>
+);
+
 function getEmbedUrl(url) {
   if (!url) return "";
   const ytMatch = url.match(
@@ -61,18 +73,6 @@ export default function TemaDetalle({ tema, pasos = [], open, onClose }) {
   function togglePaso(id) {
     setCompletados((prev) => ({ ...prev, [id]: !prev[id] }));
   }
-
-  const SectionTitle = ({ children }) => (
-    <div style={{
-      fontSize: 10, color: COLORS.oro,
-      fontFamily: "'Cinzel', serif",
-      letterSpacing: "2px", textTransform: "uppercase",
-      marginBottom: 12, paddingBottom: 8,
-      borderBottom: `1px solid ${COLORS.pergamino}`,
-    }}>
-      {children}
-    </div>
-  );
 
   return (
     <AnimatePresence>

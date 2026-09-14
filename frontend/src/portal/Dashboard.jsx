@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   BookOpen, BarChart3, Award, ChevronRight,
-  Zap, CheckCircle2, Lock, Sparkles,
+  Zap, Sparkles,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 

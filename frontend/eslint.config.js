@@ -17,5 +17,11 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Desactivada: marca el patrón idiomático de carga de datos al montar
+      // (useEffect -> fetch -> setState), usado en toda la app sin problemas.
+      // Regla nueva y demasiado agresiva de eslint-plugin-react-hooks v7.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])

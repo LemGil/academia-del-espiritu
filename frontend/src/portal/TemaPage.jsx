@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Download, Maximize2, X, ExternalLink } from "lucide-react";
-import { marcarPasoCompletado, getProgresoPasos } from "../services/progresoService";
+import { ArrowLeft, Download, Maximize2, X, ExternalLink } from "lucide-react";
+import { getProgresoPasos } from "../services/progresoService";
 import { getPreguntasPorPasos } from "../services/preguntasService";
 import { getPasosPorTemas } from "../services/pasosService";
 import { supabase } from "../lib/supabaseClient";
@@ -256,10 +256,9 @@ export default function TemaPage({ estudiante }) {
   const [tema, setTema] = useState(null);
   const [pasos, setPasos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [completados, setCompletados] = useState({});
+  const [, setCompletados] = useState({});
   const [submisiones, setSubmisiones] = useState({});
   const [subSaving, setSubSaving] = useState(null);
-  const [saving, setSaving] = useState(null);
   const [preguntasData, setPreguntasData] = useState({});
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizResults, setQuizResults] = useState({});
@@ -310,14 +309,6 @@ export default function TemaPage({ estudiante }) {
     }
     load();
   }, [temaId, estudiante?.id]);
-
-  async function togglePaso(pasoId) {
-    if (completados[pasoId] || saving === pasoId) return;
-    setSaving(pasoId);
-    await marcarPasoCompletado(estudiante.id, pasoId);
-    setCompletados((prev) => ({ ...prev, [pasoId]: true }));
-    setSaving(null);
-  }
 
   async function handleEnviar(pasoId, respuesta) {
     setSubSaving(pasoId);

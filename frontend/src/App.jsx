@@ -289,7 +289,6 @@ export default function App({ onLogout }) {
   }
 
   // ── Eliminar perfil ──
-  const [eliminarPerfilId, setEliminarPerfilId] = useState(null);
   const [eliminandoPerfil, setEliminandoPerfil] = useState(false);
 
   async function handleEliminarPerfil(perfilId) {
@@ -297,7 +296,6 @@ export default function App({ onLogout }) {
     setEliminandoPerfil(true);
     await supabase.from("perfiles").delete().eq("id", perfilId);
     setEliminandoPerfil(false);
-    setEliminarPerfilId(null);
     fetchPerfiles();
   }
 
@@ -471,7 +469,6 @@ export default function App({ onLogout }) {
   const [isPreguntasModalOpen, setIsPreguntasModalOpen] = useState(false);
   const [preguntasPasoTarget, setPreguntasPasoTarget] = useState(null);
   const [preguntasList, setPreguntasList] = useState([]);
-  const [preguntasSaving, setPreguntasSaving] = useState(false);
 
   useEffect(() => {
     if (vistaActiva === "actividades") fetchActividades();
@@ -598,7 +595,6 @@ export default function App({ onLogout }) {
   const [progresoEstudiantes, setProgresoEstudiantes] = useState([]);
   const [loadingProgreso, setLoadingProgreso] = useState(false);
   const [filtroNivelProg, setFiltroNivelProg] = useState("");
-  const [filtroCursoProg, setFiltroCursoProg] = useState("");
   const [filtroEstudianteProg, setFiltroEstudianteProg] = useState("");
   const [progresoDetallado, setProgresoDetallado] = useState(null);
 

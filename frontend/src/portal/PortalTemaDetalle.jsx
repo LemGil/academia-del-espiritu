@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { X, FileText, Square, ChevronRight, CheckCircle, Upload } from "lucide-react";
+import { X, FileText, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { marcarPasoCompletado, getProgresoPasos } from "../services/progresoService";
+import { getProgresoPasos } from "../services/progresoService";
 import { getPreguntasPorPasos } from "../services/preguntasService";
 import { supabase } from "../lib/supabaseClient";
 
@@ -10,22 +10,6 @@ const COLORS = {
   oro: "#C9A24A",
   marfil: "#F5F1E8",
   pergamino: "#D6D0C4",
-};
-
-const TIPO_LABELS = {
-  video: "Video",
-  texto: "Leer texto",
-  pdf: "PDF",
-  pregunta: "Pregunta",
-  otro: "Actividad",
-};
-
-const TIPO_COLORS = {
-  video: "#c05621",
-  texto: "#2b6cb0",
-  pdf: "#c05621",
-  pregunta: "#6b46c1",
-  otro: "#276749",
 };
 
 function getEmbedUrl(url) {
@@ -43,7 +27,7 @@ function getGoogleDriveEmbedUrl(url) {
   if (!url) return "";
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   if (!match) return "";
-  const prefix = url.match(/^(https?:\/\/[^\/]+\/[^\/]+)/);
+  const prefix = url.match(/^(https?:\/\/[^/]+\/[^/]+)/);
   if (prefix) return `${prefix[1]}/d/${match[1]}/preview`;
   return `https://drive.google.com/file/d/${match[1]}/preview`;
 }
@@ -62,11 +46,10 @@ function SectionTitle({ children }) {
   );
 }
 
-export default function PortalTemaDetalle({ tema, pasos = [], open, onClose, estudiante, readOnly = false }) {
-  const [completados, setCompletados] = useState({});
+export default function PortalTemaDetalle({ tema, pasos = [], open, onClose, estudiante }) {
+  const [, setCompletados] = useState({});
   const [submisiones, setSubmisiones] = useState({});
   const [subSaving, setSubSaving] = useState(null);
-  const [saving, setSaving] = useState(null);
   const [preguntasData, setPreguntasData] = useState({});
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizResults, setQuizResults] = useState({});
@@ -114,18 +97,6 @@ export default function PortalTemaDetalle({ tema, pasos = [], open, onClose, est
   }, [open, onClose]);
 
   if (!open || !tema) return null;
-
-  const totalPasos = pasos.length;
-  const completadosCount = Object.values(completados).filter(Boolean).length;
-  const progreso = totalPasos > 0 ? Math.round((completadosCount / totalPasos) * 100) : 0;
-
-  async function togglePaso(pasoId) {
-    if (readOnly || completados[pasoId] || saving === pasoId) return;
-    setSaving(pasoId);
-    await marcarPasoCompletado(estudiante.id, pasoId);
-    setCompletados((prev) => ({ ...prev, [pasoId]: true }));
-    setSaving(null);
-  }
 
   async function handleEnviar(pasoId, respuesta) {
     setSubSaving(pasoId);

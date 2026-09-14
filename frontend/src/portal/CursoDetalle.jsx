@@ -12,7 +12,7 @@ const COLORS = {
   pergamino: "#D6D0C4",
 };
 
-export default function CursoDetalle({ curso, estudiante, readOnly = false, onBack }) {
+export default function CursoDetalle({ curso, readOnly = false, onBack }) {
   const navigate = useNavigate();
   const [temas, setTemas] = useState([]);
   const [pasosPorTema, setPasosPorTema] = useState({});

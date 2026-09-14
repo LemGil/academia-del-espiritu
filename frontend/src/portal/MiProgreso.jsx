@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Circle, Clock, FileText, File, HelpCircle, Play, Sparkles, Target } from "lucide-react";
+import { CheckCircle, FileText, File, HelpCircle, Play, Sparkles, Target } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 
 const COLORS = {
@@ -64,11 +64,6 @@ function IconoPaso({ tipo, size }) {
   }
 }
 
-function getDias() {
-  const d = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-  return d;
-}
-
 export default function MiProgreso({ estudiante }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -106,12 +101,6 @@ export default function MiProgreso({ estudiante }) {
         .eq("estudiante_id", estudiante.id);
       const nivelCompletado = {};
       (pnRes.data || []).forEach((p) => { nivelCompletado[p.nivel_id] = p.completado_at; });
-
-      const pcRes = await supabase
-        .from("progreso_cursos")
-        .select("curso_id")
-        .eq("estudiante_id", estudiante.id);
-      const cursosCompletadosSet = new Set((pcRes.data || []).map((c) => c.curso_id));
 
       const nivelMap = {};
       nivs.forEach((n) => { nivelMap[n.id] = n; });
@@ -245,7 +234,7 @@ export default function MiProgreso({ estudiante }) {
 
   if (!data) return null;
 
-  const { nivelesMapa, cursos, totalPasos, completados, mastered, enProgresoCount, noIniciados, todosTemas, temasDebiles, historial, estaSemana, metaSemanal } = data;
+  const { nivelesMapa, totalPasos, completados, mastered, enProgresoCount, noIniciados, todosTemas, historial, estaSemana, metaSemanal } = data;
   const pctGlobal = totalPasos > 0 ? Math.round((completados / totalPasos) * 100) : 0;
   const currentNivel = nivelesMapa.find((n) => n.esActual);
   const nextNivel = nivelesMapa.find((n) => n.orden === (currentNivel?.orden ?? 0) + 1);
@@ -283,7 +272,6 @@ export default function MiProgreso({ estudiante }) {
           {nivelesMapa.map((n, i) => {
             const isCurrent = n.esActual;
             const isCompleted = n.completado;
-            const isLocked = n.bloqueado;
             return (
               <div key={n.id} style={{
                 display: "flex", alignItems: "center", flex: 1,
