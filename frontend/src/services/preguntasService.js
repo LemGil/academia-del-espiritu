@@ -72,3 +72,31 @@ export async function deleteOpcion(id) {
     .eq("id", id);
   return { error };
 }
+
+// ── Respuestas correctas (tabla opciones_correctas, solo admin) ─────────────
+export async function setOpcionCorrecta(preguntaId, opcionId) {
+  const { data, error } = await supabase
+    .from("opciones_correctas")
+    .upsert({ pregunta_id: preguntaId, opcion_id: opcionId }, { onConflict: "pregunta_id" })
+    .select()
+    .single();
+  return { data, error };
+}
+
+export async function getRespuestasCorrectas(preguntaIds) {
+  if (!preguntaIds || preguntaIds.length === 0) return { data: [], error: null };
+  const { data, error } = await supabase
+    .from("opciones_correctas")
+    .select("pregunta_id, opcion_id")
+    .in("pregunta_id", preguntaIds);
+  return { data, error };
+}
+
+// ── Calificación del quiz en el servidor (el estudiante nunca ve es_correcta)
+export async function calificarQuiz(pasoId, respuestas) {
+  const { data, error } = await supabase.rpc("fn_calificar_quiz", {
+    p_paso_id: pasoId,
+    p_respuestas: respuestas,
+  });
+  return { data, error };
+}

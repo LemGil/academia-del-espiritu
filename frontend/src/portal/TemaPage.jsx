@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, Maximize2, X, ExternalLink } from "lucide-react";
 import { getProgresoPasos } from "../services/progresoService";
-import { getPreguntasPorPasos } from "../services/preguntasService";
+import { getPreguntasPorPasos, calificarQuiz } from "../services/preguntasService";
 import { getPasosPorTemas } from "../services/pasosService";
 import { supabase } from "../lib/supabaseClient";
 
@@ -359,53 +359,44 @@ export default function TemaPage({ estudiante }) {
   }
 
   async function handleSubmitQuiz(pasoId) {
-    const preguntas = preguntasData[pasoId] || [];
     const answers = quizAnswers[pasoId] || {};
 
-    const errores = [];
-    for (const pq of preguntas) {
-      const selected = answers[pq.id];
-      const correcta = (pq.opciones_respuesta || []).find(o => o.es_correcta);
-      if (!correcta || selected !== correcta.id) {
-        errores.push(pq.id);
-      }
-    }
+    // La calificación ocurre en el servidor (fn_calificar_quiz): el estudiante
+    // nunca recibe las respuestas correctas. Si todo está bien, la función
+    // ya registró la entrega como 'aprobada'.
+    setSubSaving(pasoId);
+    const { data, error } = await calificarQuiz(pasoId, answers);
+    setSubSaving(null);
 
-    if (errores.length > 0) {
-      setQuizResults(prev => ({ ...prev, [pasoId]: { allCorrect: false, errores } }));
+    if (error || !data) {
+      console.error("Error al calificar quiz:", error);
       return;
     }
 
-    setQuizResults(prev => ({ ...prev, [pasoId]: { allCorrect: true, errores: [] } }));
-
-    setSubSaving(pasoId);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSubSaving(null); return; }
-
-    const existing = submisiones[pasoId];
-    let submission = null;
-    if (existing) {
-      const { error: upErr } = await supabase
-        .from("entregas_actividades")
-        .update({ estado: 'aprobada', respuesta_texto: JSON.stringify(answers) })
-        .eq("id", existing.id);
-      if (!upErr) submission = { ...existing, estado: 'aprobada', respuesta_texto: JSON.stringify(answers) };
-    }
-
-    if (!submission) {
-      const { data: ins, error: inErr } = await supabase
-        .from("entregas_actividades")
-        .insert([{ alumno_id: user.id, actividad_id: pasoId, respuesta_texto: JSON.stringify(answers), estado: 'aprobada' }])
-        .select();
-      if (!inErr) {
-        submission = ins?.[0] || { id: crypto.randomUUID(), alumno_id: user.id, actividad_id: pasoId, respuesta_texto: JSON.stringify(answers), estado: 'aprobada', comentario_admin: null };
-      } else {
-        console.error("Error al guardar quiz:", inErr);
+    if (!data.correcta) {
+      const errores = (data.errores || []).map(e => e.pregunta_id);
+      const correctas = {};
+      for (const e of (data.errores || [])) {
+        if (e.opcion_correcta_id) correctas[e.pregunta_id] = e.opcion_correcta_id;
       }
+      setQuizResults(prev => ({ ...prev, [pasoId]: { allCorrect: false, errores, correctas } }));
+      return;
     }
 
-    if (submission) setSubmisiones(prev => ({ ...prev, [pasoId]: submission }));
-    setSubSaving(null);
+    setQuizResults(prev => ({ ...prev, [pasoId]: { allCorrect: true, errores: [], correctas: {} } }));
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (data.entrega_id && user) {
+      const submission = {
+        id: data.entrega_id,
+        alumno_id: user.id,
+        actividad_id: pasoId,
+        respuesta_texto: JSON.stringify(answers),
+        estado: 'aprobada',
+        comentario_admin: null,
+      };
+      setSubmisiones(prev => ({ ...prev, [pasoId]: submission }));
+    }
   }
 
   if (loading) {
@@ -554,6 +545,7 @@ export default function TemaPage({ estudiante }) {
                                   {(preguntasData[paso.id] || []).map((pq, idx) => {
                                     const selectedOp = (quizAnswers[paso.id] || {})[pq.id];
                                     const error = (quizResults[paso.id]?.errores || []).includes(pq.id);
+                                    const correctaId = (quizResults[paso.id]?.correctas || {})[pq.id];
                                     return (
                                       <div key={pq.id} style={{ marginBottom: 16 }}>
                                         <p style={{ fontSize: 13, color: COLORS.teal, fontFamily: "'Cinzel', serif", fontWeight: 600, marginBottom: 8 }}>
@@ -563,7 +555,7 @@ export default function TemaPage({ estudiante }) {
                                           <label key={op.id} style={{
                                             display: "block", padding: "7px 10px", marginBottom: 4,
                                             background: error && selectedOp === op.id ? "rgba(163,45,45,0.06)" : "transparent",
-                                            border: `1px solid ${error && (selectedOp === op.id || op.es_correcta) ? (op.es_correcta ? "#276749" : "#a32d2d") : COLORS.pergamino}`,
+                                            border: `1px solid ${error && (selectedOp === op.id || correctaId === op.id) ? (correctaId === op.id ? "#276749" : "#a32d2d") : COLORS.pergamino}`,
                                             borderRadius: 2, cursor: "pointer", fontSize: 13, color: COLORS.teal,
                                             fontFamily: "'EB Garamond', Georgia, serif",
                                           }}>

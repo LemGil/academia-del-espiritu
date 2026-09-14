@@ -8,7 +8,7 @@ import TemaForm from "./components/TemaForm";
 import TemaList from "./components/TemaList";
 import PasoForm from "./components/PasoForm";
 import ActividadForm from "./components/ActividadForm";
-import { getPreguntasPorPaso, createPregunta, updatePregunta, deletePregunta, createOpcion, updateOpcion, deleteOpcion } from "./services/preguntasService";
+import { getPreguntasPorPaso, createPregunta, updatePregunta, deletePregunta, createOpcion, updateOpcion, deleteOpcion, setOpcionCorrecta, getRespuestasCorrectas } from "./services/preguntasService";
 import EstudianteForm from "./components/EstudianteForm";
 import EstudianteList from "./components/EstudianteList";
 import { useNiveles } from "./hooks/useNiveles";
@@ -536,7 +536,15 @@ export default function App({ onLogout }) {
   async function abrirGestionPreguntas(paso) {
     setPreguntasPasoTarget(paso);
     const { data } = await getPreguntasPorPaso(paso.id);
-    setPreguntasList(data || []);
+    const lista = data || [];
+    // es_correcta vive en opciones_correctas (solo admin): la derivamos localmente
+    const { data: correctas } = await getRespuestasCorrectas(lista.map(p => p.id));
+    const mapa = {};
+    (correctas || []).forEach(r => { mapa[r.pregunta_id] = r.opcion_id; });
+    setPreguntasList(lista.map(p => ({
+      ...p,
+      opciones_respuesta: (p.opciones_respuesta || []).map(o => ({ ...o, es_correcta: mapa[p.id] === o.id }))
+    })));
     setIsPreguntasModalOpen(true);
   }
 
@@ -544,8 +552,13 @@ export default function App({ onLogout }) {
     if (!preguntasPasoTarget) return;
     const { data } = await createPregunta({ paso_id: preguntasPasoTarget.id, texto: "Nueva pregunta", orden: preguntasList.length + 1 });
     if (data) {
-      const opcion = await createOpcion({ pregunta_id: data.id, texto: "Opción 1", es_correcta: true });
-      data.opciones_respuesta = opcion.data ? [opcion.data] : [];
+      const opcion = await createOpcion({ pregunta_id: data.id, texto: "Opción 1" });
+      if (opcion.data) {
+        await setOpcionCorrecta(data.id, opcion.data.id);
+        data.opciones_respuesta = [{ ...opcion.data, es_correcta: true }];
+      } else {
+        data.opciones_respuesta = [];
+      }
       setPreguntasList(prev => [...prev, data]);
     }
   }
@@ -564,9 +577,9 @@ export default function App({ onLogout }) {
   async function handleAddOpcion(preguntaId) {
     const preg = preguntasList.find(p => p.id === preguntaId);
     const num = (preg?.opciones_respuesta?.length || 0) + 1;
-    const { data } = await createOpcion({ pregunta_id: preguntaId, texto: `Opción ${num}`, es_correcta: false });
+    const { data } = await createOpcion({ pregunta_id: preguntaId, texto: `Opción ${num}` });
     if (data) {
-      setPreguntasList(prev => prev.map(p => p.id === preguntaId ? { ...p, opciones_respuesta: [...(p.opciones_respuesta || []), data] } : p));
+      setPreguntasList(prev => prev.map(p => p.id === preguntaId ? { ...p, opciones_respuesta: [...(p.opciones_respuesta || []), { ...data, es_correcta: false }] } : p));
     }
   }
 
@@ -576,10 +589,8 @@ export default function App({ onLogout }) {
   }
 
   async function handleSetOpcionCorrecta(preguntaId, opcionId) {
-    const preg = preguntasList.find(p => p.id === preguntaId);
-    for (const op of (preg?.opciones_respuesta || [])) {
-      await updateOpcion(op.id, { es_correcta: op.id === opcionId });
-    }
+    // La respuesta correcta vive en opciones_correctas (solo admin vía RLS)
+    await setOpcionCorrecta(preguntaId, opcionId);
     setPreguntasList(prev => prev.map(p => p.id === preguntaId ? {
       ...p,
       opciones_respuesta: (p.opciones_respuesta || []).map(o => ({ ...o, es_correcta: o.id === opcionId }))
