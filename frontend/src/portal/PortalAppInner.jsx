@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { getEstudianteConNivel } from "../services/authService";
 import PortalLayout from "./PortalLayout";
@@ -6,8 +6,10 @@ import Dashboard from "./Dashboard";
 import MisCursos from "./MisCursos";
 import CursoDetalle from "./CursoDetalle";
 import MiProgreso from "./MiProgreso";
-import Certificados from "./Certificados";
 import TemaPage from "./TemaPage";
+
+// La vista de certificados usa jspdf (pesada); se carga bajo demanda.
+const Certificados = lazy(() => import("./Certificados"));
 
 const COLORS = {
   teal: "#1A3A4A",
@@ -154,7 +156,15 @@ export default function PortalAppInner({ profile, onLogout }) {
       case "progreso":
         return <MiProgreso estudiante={estudiante} />;
       case "certificados":
-        return <Certificados estudiante={estudiante} />;
+        return (
+          <Suspense fallback={
+            <p style={{ color: "#888", fontStyle: "italic", fontSize: 15, padding: 24 }}>
+              Cargando certificados...
+            </p>
+          }>
+            <Certificados estudiante={estudiante} />
+          </Suspense>
+        );
       default:
         return (
           <Dashboard

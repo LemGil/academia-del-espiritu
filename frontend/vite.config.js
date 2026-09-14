@@ -31,4 +31,30 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    // Code-splitting: agrupa las librerías grandes en chunks propios para que
+    // se descarguen una sola vez y se cacheen por separado del código de la app.
+    // (Vite 8 usa Rolldown: manualChunks debe ser función, no objeto.)
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          const n = id.replace(/\\/g, "/");
+          if (
+            n.includes("node_modules/react-router-dom/") ||
+            n.includes("node_modules/react-router/") ||
+            n.includes("node_modules/react-dom/") ||
+            n.includes("node_modules/react/")
+          ) {
+            return "vendor-react";
+          }
+          if (n.includes("node_modules/framer-motion/")) return "vendor-motion";
+          if (n.includes("node_modules/@supabase/")) return "vendor-supabase";
+          // Nota: jspdf/html2canvas NO se separan aquí a propósito: solo los usa
+          // el panel de administración y el portal (chunks lazy); separarlos
+          // provocaba que Rolldown los precargara junto al entry inicial.
+        },
+      },
+    },
+  },
 })

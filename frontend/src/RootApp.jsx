@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { logout } from "./services/authService";
 import Login from "./portal/Login";
-import App from "./App";
-import PortalAppInner from "./portal/PortalAppInner";
-import VerificarCertificado from "./components/VerificarCertificado";
+
+// Code-splitting: el panel de administración, el portal del estudiante y la
+// verificación pública de certificados se cargan bajo demanda para reducir
+// el tamaño del bundle inicial. Sin cambios de comportamiento visible.
+const App = lazy(() => import("./App"));
+const PortalAppInner = lazy(() => import("./portal/PortalAppInner"));
+const VerificarCertificado = lazy(() => import("./components/VerificarCertificado"));
 
 const COLORS = {
   teal: "#1A3A4A",
@@ -12,6 +16,22 @@ const COLORS = {
   marfil: "#F5F1E8",
   pergamino: "#D6D0C4",
 };
+
+function PantallaCargando({ texto }) {
+  return (
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: COLORS.marfil,
+    }}>
+      <p style={{ color: "#888", fontStyle: "italic", fontSize: 15 }}>
+        {texto || "Cargando..."}
+      </p>
+    </div>
+  );
+}
 
 export default function RootApp() {
   const { user, profile, loading, refresh } = useAuth();
@@ -31,26 +51,18 @@ export default function RootApp() {
   }
 
   if (loading || !appReady) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: COLORS.marfil,
-      }}>
-        <p style={{ color: "#888", fontStyle: "italic", fontSize: 15 }}>
-          Cargando...
-        </p>
-      </div>
-    );
+    return <PantallaCargando />;
   }
 
   // Public verification page
   const params = new URLSearchParams(window.location.search);
   const codigoVerif = params.get("codigo");
   if (codigoVerif) {
-    return <VerificarCertificado codigo={codigoVerif} />;
+    return (
+      <Suspense fallback={<PantallaCargando />}>
+        <VerificarCertificado codigo={codigoVerif} />
+      </Suspense>
+    );
   }
 
   if (!user) {
@@ -59,12 +71,20 @@ export default function RootApp() {
 
   // Admin / Instructor → panel de administración
   if (profile && (profile.rol === "admin" || profile.rol === "instructor")) {
-    return <App onLogout={handleLogout} />;
+    return (
+      <Suspense fallback={<PantallaCargando texto="Cargando panel de administración..." />}>
+        <App onLogout={handleLogout} />
+      </Suspense>
+    );
   }
 
   // Estudiante → portal del estudiante
   if (profile && profile.rol === "estudiante") {
-    return <PortalAppInner profile={profile} user={user} onLogout={handleLogout} />;
+    return (
+      <Suspense fallback={<PantallaCargando texto="Cargando portal..." />}>
+        <PortalAppInner profile={profile} user={user} onLogout={handleLogout} />
+      </Suspense>
+    );
   }
 
   // Logged in but no recognized profile
