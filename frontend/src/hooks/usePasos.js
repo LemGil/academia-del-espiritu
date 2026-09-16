@@ -41,10 +41,11 @@ export function usePasos(temas = []) {
     if (error) {
       setError("No se pudo crear el paso.");
       setSaving(false);
-      return;
+      return false;
     }
     await fetchPasos();
     setSaving(false);
+    return true;
   }
 
   async function editPaso(id, updates) {
@@ -54,10 +55,11 @@ export function usePasos(temas = []) {
     if (error) {
       setError("No se pudo actualizar el paso.");
       setSaving(false);
-      return;
+      return false;
     }
     await fetchPasos();
     setSaving(false);
+    return true;
   }
 
   async function removePaso(id) {
@@ -71,11 +73,16 @@ export function usePasos(temas = []) {
   }
 
   function startEditPaso(paso) {
+    setError(null);
     setEditingPaso(paso);
   }
 
   function clearEditingPaso() {
     setEditingPaso(null);
+  }
+
+  function clearError() {
+    setError(null);
   }
 
   const pasosPorTema = pasos.reduce((acc, paso) => {
@@ -96,5 +103,6 @@ export function usePasos(temas = []) {
     editingPaso,
     startEditPaso,
     clearEditingPaso,
+    clearError,
   };
 }

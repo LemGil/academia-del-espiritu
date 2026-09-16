@@ -55,10 +55,11 @@ export function useEstudiantes() {
     if (error) {
       setError("No se pudo crear el estudiante.");
       setSaving(false);
-      return;
+      return false;
     }
     await fetchEstudiantes();
     setSaving(false);
+    return true;
   }
 
   async function editEstudiante(id, updates) {
@@ -68,10 +69,11 @@ export function useEstudiantes() {
     if (error) {
       setError("No se pudo actualizar el estudiante.");
       setSaving(false);
-      return;
+      return false;
     }
     await fetchEstudiantes();
     setSaving(false);
+    return true;
   }
 
   async function removeEstudiante(id) {
@@ -85,11 +87,13 @@ export function useEstudiantes() {
   }
 
   function startEdit(estudiante) {
+    setError(null);
     setEditingEstudiante(estudiante);
     setIsModalOpen(true);
   }
 
   function startCreate() {
+    setError(null);
     setEditingEstudiante(null);
     setIsModalOpen(true);
   }

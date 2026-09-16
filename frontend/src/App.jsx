@@ -61,6 +61,20 @@ function BtnOutline({ onClick, children }) {
   );
 }
 
+// Aviso de error dentro de las ventanas: si el guardado falla, la ventana
+// queda abierta y se muestra el motivo en lugar de cerrarse en silencio.
+function ErrorBanner({ message }) {
+  if (!message) return null;
+  return (
+    <div style={{
+      background: "#fdecea", border: "1px solid #e0a3a3", color: "#a32d2d",
+      borderRadius: 4, padding: "10px 14px", marginBottom: 14, fontSize: 14,
+    }}>
+      {message}
+    </div>
+  );
+}
+
 function Topbar({ breadcrumb, children }) {
   return (
     <div style={{
@@ -318,6 +332,7 @@ export default function App({ onLogout }) {
   const [isCursoGlobalModalOpen, setIsCursoGlobalModalOpen] = useState(false);
   const [editingCursoGlobal, setEditingCursoGlobal] = useState(null);
   const [cursosSaving, setCursosSaving] = useState(false);
+  const [errorCursoGlobal, setErrorCursoGlobal] = useState(null);
   const [filtroNivelCursos, setFiltroNivelCursos] = useState("");
 
   useEffect(() => {
@@ -349,6 +364,7 @@ export default function App({ onLogout }) {
 
   async function handleSaveCursoGlobal(curso, imagenFile) {
     setCursosSaving(true);
+    setErrorCursoGlobal(null);
     try {
       if (editingCursoGlobal) {
         let imagen_url = editingCursoGlobal.imagen_url;
@@ -356,11 +372,12 @@ export default function App({ onLogout }) {
           const url = await subirImagen(imagenFile, editingCursoGlobal.id);
           if (url) imagen_url = url;
         }
-        await supabase.from("cursos").update({ ...curso, imagen_url }).eq("id", editingCursoGlobal.id);
+        const { error } = await supabase.from("cursos").update({ ...curso, imagen_url }).eq("id", editingCursoGlobal.id);
+        if (error) { setErrorCursoGlobal("No se pudo actualizar la serie."); setCursosSaving(false); return; }
       } else {
         const { data: nuevoCurso, error } = await supabase
           .from("cursos").insert([curso]).select().single();
-        if (error) { console.error("Error creando curso:", error.message); setCursosSaving(false); return; }
+        if (error) { setErrorCursoGlobal("No se pudo crear la serie."); setCursosSaving(false); return; }
         if (imagenFile && nuevoCurso?.id) {
           const url = await subirImagen(imagenFile, nuevoCurso.id);
           if (url) {
@@ -373,6 +390,7 @@ export default function App({ onLogout }) {
       setEditingCursoGlobal(null);
     } catch (e) {
       console.error(e);
+      setErrorCursoGlobal("No se pudo guardar la serie.");
     }
     setCursosSaving(false);
   }
@@ -389,6 +407,7 @@ export default function App({ onLogout }) {
   const [isTemaGlobalModalOpen, setIsTemaGlobalModalOpen] = useState(false);
   const [editingTemaGlobal, setEditingTemaGlobal] = useState(null);
   const [temasSaving, setTemasSaving] = useState(false);
+  const [errorTemaGlobal, setErrorTemaGlobal] = useState(null);
   const [allCursosFlat, setAllCursosFlat] = useState([]);
   const [filtroNivelTema, setFiltroNivelTema] = useState("");
   const [filtroCursoTema, setFiltroCursoTema] = useState("");
@@ -434,17 +453,21 @@ export default function App({ onLogout }) {
 
   async function handleSaveTemaGlobal(formData) {
     setTemasSaving(true);
+    setErrorTemaGlobal(null);
     try {
       if (editingTemaGlobal) {
-        await supabase.from("temas").update(formData).eq("id", editingTemaGlobal.id);
+        const { error } = await supabase.from("temas").update(formData).eq("id", editingTemaGlobal.id);
+        if (error) { setErrorTemaGlobal("No se pudo actualizar la academia."); setTemasSaving(false); return; }
       } else {
-        await supabase.from("temas").insert([formData]);
+        const { error } = await supabase.from("temas").insert([formData]);
+        if (error) { setErrorTemaGlobal("No se pudo crear la academia."); setTemasSaving(false); return; }
       }
       await fetchTodosTemas();
       setIsTemaGlobalModalOpen(false);
       setEditingTemaGlobal(null);
     } catch (e) {
       console.error(e);
+      setErrorTemaGlobal("No se pudo guardar la academia.");
     }
     setTemasSaving(false);
   }
@@ -461,6 +484,7 @@ export default function App({ onLogout }) {
   const [isActividadModalOpen, setIsActividadModalOpen] = useState(false);
   const [editingActividad, setEditingActividad] = useState(null);
   const [actividadSaving, setActividadSaving] = useState(false);
+  const [errorActividad, setErrorActividad] = useState(null);
   const [allCursosAct, setAllCursosAct] = useState([]);
   const [allTemasAct, setAllTemasAct] = useState([]);
   const [filtroNivel, setFiltroNivel] = useState("");
@@ -505,6 +529,7 @@ export default function App({ onLogout }) {
 
   async function handleSaveActividad(formData) {
     setActividadSaving(true);
+    setErrorActividad(null);
     try {
       const payload = {
         ...formData,
@@ -512,16 +537,17 @@ export default function App({ onLogout }) {
       };
       if (editingActividad) {
         const { error } = await supabase.from("pasos").update(payload).eq("id", editingActividad.id);
-        if (error) console.error("Error al actualizar:", error);
+        if (error) { setErrorActividad("No se pudo actualizar la actividad."); setActividadSaving(false); return; }
       } else {
         const { error } = await supabase.from("pasos").insert([payload]);
-        if (error) console.error("Error al insertar:", error);
+        if (error) { setErrorActividad("No se pudo crear la actividad."); setActividadSaving(false); return; }
       }
       await fetchActividades();
       setIsActividadModalOpen(false);
       setEditingActividad(null);
     } catch (e) {
       console.error(e);
+      setErrorActividad("No se pudo guardar la actividad.");
     }
     setActividadSaving(false);
   }
@@ -701,7 +727,7 @@ export default function App({ onLogout }) {
 
   // ── Niveles ──
   const {
-    niveles, loading: loadingNiveles, saving: savingNiveles,
+    niveles, loading: loadingNiveles, saving: savingNiveles, error: errorNiveles,
     addNivel, editNivel, removeNivel,
     editingNivel, isModalOpen: isNivelModalOpen,
     startEdit: startEditNivel, startCreate: startCreateNivel,
@@ -709,14 +735,15 @@ export default function App({ onLogout }) {
   } = useNiveles();
 
   async function handleSaveNivel(formData) {
-    if (editingNivel) await editNivel(editingNivel.id, formData);
-    else await addNivel(formData);
-    closeNivelModal();
+    const ok = editingNivel
+      ? await editNivel(editingNivel.id, formData)
+      : await addNivel(formData);
+    if (ok) closeNivelModal();
   }
 
   // ── Cursos ──
   const {
-    cursos, loading: loadingCursos, saving: savingCursos,
+    cursos, loading: loadingCursos, saving: savingCursos, error: errorCursos,
     addCurso, editCurso, removeCurso,
     editingCurso, isModalOpen: isCursoModalOpen,
     startEdit: startEditCurso, startCreate: startCreateCurso,
@@ -724,14 +751,15 @@ export default function App({ onLogout }) {
   } = useCursos(selectedNivel?.id);
 
   async function handleSaveCurso(curso, imagenFile) {
-    if (editingCurso) await editCurso(editingCurso.id, curso, imagenFile);
-    else await addCurso(curso, imagenFile);
-    closeCursoModal();
+    const ok = editingCurso
+      ? await editCurso(editingCurso.id, curso, imagenFile)
+      : await addCurso(curso, imagenFile);
+    if (ok) closeCursoModal();
   }
 
   // ── Temas ──
   const {
-    temas, loading: loadingTemas, saving: savingTemas,
+    temas, loading: loadingTemas, saving: savingTemas, error: errorTemas,
     addTema, editTema, removeTema,
     editingTema, isModalOpen: isTemaModalOpen,
     startEdit: startEditTema, startCreate: startCreateTema,
@@ -739,20 +767,22 @@ export default function App({ onLogout }) {
   } = useTemas(selectedCurso?.id);
 
   async function handleSaveTema(formData) {
-    if (editingTema) await editTema(editingTema.id, formData);
-    else await addTema(formData);
-    closeTemaModal();
+    const ok = editingTema
+      ? await editTema(editingTema.id, formData)
+      : await addTema(formData);
+    if (ok) closeTemaModal();
   }
 
   // ── Pasos ──
   const {
-    pasosPorTema, saving: savingPasos,
+    pasosPorTema, saving: savingPasos, error: errorPasos,
     addPaso, editPaso, removePaso,
-    editingPaso, startEditPaso, clearEditingPaso,
+    editingPaso, startEditPaso, clearEditingPaso, clearError: clearErrorPasos,
   } = usePasos(temas);
 
   function handleAddPaso(temaId) {
     setSelectedTemaId(temaId);
+    clearErrorPasos();
     setIsPasoModalOpen(true);
   }
 
@@ -763,15 +793,18 @@ export default function App({ onLogout }) {
   }
 
   async function handleSavePaso(formData) {
-    if (editingPaso) await editPaso(editingPaso.id, formData);
-    else await addPaso(selectedTemaId, formData);
-    setIsPasoModalOpen(false);
-    clearEditingPaso();
+    const ok = editingPaso
+      ? await editPaso(editingPaso.id, formData)
+      : await addPaso(selectedTemaId, formData);
+    if (ok) {
+      setIsPasoModalOpen(false);
+      clearEditingPaso();
+    }
   }
 
   // ── Estudiantes ──
   const {
-    estudiantes, loading: loadingEstudiantes, saving: savingEstudiantes,
+    estudiantes, loading: loadingEstudiantes, saving: savingEstudiantes, error: errorEstudiantes,
     addEstudiante, editEstudiante, removeEstudiante,
     editingEstudiante, isModalOpen: isEstudianteModalOpen,
     startEdit: startEditEstudiante, startCreate: startCreateEstudiante,
@@ -834,9 +867,10 @@ export default function App({ onLogout }) {
   }
 
   async function handleSaveEstudiante(formData) {
-    if (editingEstudiante) await editEstudiante(editingEstudiante.id, formData);
-    else await addEstudiante(formData);
-    closeEstudianteModal();
+    const ok = editingEstudiante
+      ? await editEstudiante(editingEstudiante.id, formData)
+      : await addEstudiante(formData);
+    if (ok) closeEstudianteModal();
   }
 
   return (
@@ -878,9 +912,11 @@ export default function App({ onLogout }) {
               }
             </div>
             <Modal open={isTemaModalOpen} onClose={closeTemaModal} title={editingTema ? "Editar Academia" : "Nueva Academia"}>
+              <ErrorBanner message={errorTemas} />
               <TemaForm onSave={handleSaveTema} editingTema={editingTema} saving={savingTemas} onClose={closeTemaModal} />
             </Modal>
             <Modal open={isPasoModalOpen} onClose={() => { setIsPasoModalOpen(false); clearEditingPaso(); }} title={editingPaso ? "Editar Paso" : "Nuevo Paso"}>
+              <ErrorBanner message={errorPasos} />
               <PasoForm onSave={handleSavePaso} editingPaso={editingPaso} saving={savingPasos} onClose={() => { setIsPasoModalOpen(false); clearEditingPaso(); }} />
             </Modal>
           </>
@@ -906,6 +942,7 @@ export default function App({ onLogout }) {
               }
             </div>
             <Modal open={isCursoModalOpen} onClose={closeCursoModal} title={editingCurso ? "Editar Serie" : "Nueva Serie"}>
+              <ErrorBanner message={errorCursos} />
               <CursoForm onSave={handleSaveCurso} editingCurso={editingCurso} saving={savingCursos} onClose={closeCursoModal} />
             </Modal>
           </>
@@ -1083,6 +1120,7 @@ export default function App({ onLogout }) {
               )}
             </div>
             <Modal open={isEstudianteModalOpen} onClose={closeEstudianteModal} title={editingEstudiante ? "Editar Estudiante" : "Nuevo Estudiante"}>
+              <ErrorBanner message={errorEstudiantes} />
               <EstudianteForm
                 onSave={handleSaveEstudiante}
                 editingEstudiante={editingEstudiante}
@@ -1335,6 +1373,7 @@ export default function App({ onLogout }) {
             <Topbar breadcrumb="Todas las Series">
               <BtnGold onClick={() => {
                 setEditingCursoGlobal(null);
+                setErrorCursoGlobal(null);
                 setIsCursoGlobalModalOpen(true);
               }}>+ Nueva Serie</BtnGold>
             </Topbar>
@@ -1401,6 +1440,7 @@ export default function App({ onLogout }) {
                                 <button
                                   onClick={() => {
                                     setEditingCursoGlobal(c);
+                                    setErrorCursoGlobal(null);
                                     setIsCursoGlobalModalOpen(true);
                                   }}
                                   style={{
@@ -1433,6 +1473,7 @@ export default function App({ onLogout }) {
               )}
             </div>
             <Modal open={isCursoGlobalModalOpen} onClose={() => { setIsCursoGlobalModalOpen(false); setEditingCursoGlobal(null); }} title={editingCursoGlobal ? "Editar Serie" : "Nueva Serie"}>
+              <ErrorBanner message={errorCursoGlobal} />
               <CursoForm onSave={handleSaveCursoGlobal} editingCurso={editingCursoGlobal} saving={cursosSaving} onClose={() => { setIsCursoGlobalModalOpen(false); setEditingCursoGlobal(null); }} niveles={niveles} />
             </Modal>
           </>
@@ -1443,6 +1484,7 @@ export default function App({ onLogout }) {
             <Topbar breadcrumb="Todas las Academias">
               <BtnGold onClick={() => {
                 setEditingTemaGlobal(null);
+                setErrorTemaGlobal(null);
                 setIsTemaGlobalModalOpen(true);
               }}>+ Nueva Academia</BtnGold>
             </Topbar>
@@ -1514,6 +1556,7 @@ export default function App({ onLogout }) {
                                 <button
                                   onClick={() => {
                                     setEditingTemaGlobal(t);
+                                    setErrorTemaGlobal(null);
                                     setIsTemaGlobalModalOpen(true);
                                   }}
                                   style={{
@@ -1546,6 +1589,7 @@ export default function App({ onLogout }) {
               )}
             </div>
             <Modal open={isTemaGlobalModalOpen} onClose={() => { setIsTemaGlobalModalOpen(false); setEditingTemaGlobal(null); }} title={editingTemaGlobal ? "Editar Academia" : "Nueva Academia"}>
+              <ErrorBanner message={errorTemaGlobal} />
               <TemaForm onSave={handleSaveTemaGlobal} editingTema={editingTemaGlobal} saving={temasSaving} onClose={() => { setIsTemaGlobalModalOpen(false); setEditingTemaGlobal(null); }} niveles={niveles} cursos={allCursosFlat} />
             </Modal>
           </>
@@ -1555,6 +1599,7 @@ export default function App({ onLogout }) {
             <Topbar breadcrumb="Actividades">
               <BtnGold onClick={() => {
                 setEditingActividad(null);
+                setErrorActividad(null);
                 setIsActividadModalOpen(true);
               }}>+ Nueva Actividad</BtnGold>
             </Topbar>
@@ -1625,6 +1670,7 @@ export default function App({ onLogout }) {
                           <button
                             onClick={() => {
                               setEditingActividad(a);
+                              setErrorActividad(null);
                               setIsActividadModalOpen(true);
                             }}
                             style={{
@@ -1666,6 +1712,7 @@ export default function App({ onLogout }) {
               )}
             </div>
             <Modal open={isActividadModalOpen} onClose={() => { setIsActividadModalOpen(false); setEditingActividad(null); }} title={editingActividad ? "Editar Actividad" : "Nueva Actividad"}>
+              <ErrorBanner message={errorActividad} />
               <ActividadForm onSave={handleSaveActividad} editingActividad={editingActividad} saving={actividadSaving} onClose={() => { setIsActividadModalOpen(false); setEditingActividad(null); }} niveles={niveles} cursos={allCursosAct} temas={allTemasAct} />
             </Modal>
             <Modal open={isPreguntasModalOpen} onClose={() => { setIsPreguntasModalOpen(false); setPreguntasList([]); setPreguntasPasoTarget(null); }} title={preguntasPasoTarget ? `Preguntas: ${preguntasPasoTarget.titulo}` : "Gestionar Preguntas"}>
@@ -1895,6 +1942,7 @@ export default function App({ onLogout }) {
               }
             </div>
             <Modal open={isNivelModalOpen} onClose={closeNivelModal} title={editingNivel ? "Editar Nivel" : "Nuevo Nivel"}>
+              <ErrorBanner message={errorNiveles} />
               <NivelForm onSave={handleSaveNivel} editingNivel={editingNivel} saving={savingNiveles} onClose={closeNivelModal} />
             </Modal>
           </>

@@ -40,10 +40,11 @@ export function useTemas(cursoId = null) {
     if (error) {
       setError("No se pudo crear la academia.");
       setSaving(false);
-      return;
+      return false;
     }
     await fetchTemas();
     setSaving(false);
+    return true;
   }
 
   async function editTema(id, updates) {
@@ -53,10 +54,11 @@ export function useTemas(cursoId = null) {
     if (error) {
       setError("No se pudo actualizar la academia.");
       setSaving(false);
-      return;
+      return false;
     }
     await fetchTemas();
     setSaving(false);
+    return true;
   }
 
   async function removeTema(id) {
@@ -70,11 +72,13 @@ export function useTemas(cursoId = null) {
   }
 
   function startEdit(tema) {
+    setError(null);
     setEditingTema(tema);
     setIsModalOpen(true);
   }
 
   function startCreate() {
+    setError(null);
     setEditingTema(null);
     setIsModalOpen(true);
   }

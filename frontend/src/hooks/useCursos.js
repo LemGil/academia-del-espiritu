@@ -57,7 +57,7 @@ export function useCursos(nivelId = null) {
     if (error) {
       setError("No se pudo crear la serie.");
       setSaving(false);
-      return;
+      return false;
     }
 
     if (imagenFile && nuevoCurso?.id) {
@@ -69,6 +69,7 @@ export function useCursos(nivelId = null) {
 
     await fetchCursos();
     setSaving(false);
+    return true;
   }
 
   async function editCurso(id, updates, imagenFile) {
@@ -86,11 +87,12 @@ export function useCursos(nivelId = null) {
     if (error) {
       setError("No se pudo actualizar la serie.");
       setSaving(false);
-      return;
+      return false;
     }
 
     await fetchCursos();
     setSaving(false);
+    return true;
   }
 
   async function removeCurso(id) {
@@ -104,11 +106,13 @@ export function useCursos(nivelId = null) {
   }
 
   function startEdit(curso) {
+    setError(null);
     setEditingCurso(curso);
     setIsModalOpen(true);
   }
 
   function startCreate() {
+    setError(null);
     setEditingCurso(null);
     setIsModalOpen(true);
   }

@@ -32,10 +32,11 @@ export function useNiveles() {
     if (error) {
       setError("No se pudo crear el nivel.");
       setSaving(false);
-      return;
+      return false;
     }
     await fetchNiveles();
     setSaving(false);
+    return true;
   }
 
   async function editNivel(id, updates) {
@@ -45,10 +46,11 @@ export function useNiveles() {
     if (error) {
       setError("No se pudo actualizar el nivel.");
       setSaving(false);
-      return;
+      return false;
     }
     await fetchNiveles();
     setSaving(false);
+    return true;
   }
 
   async function removeNivel(id) {
@@ -62,11 +64,13 @@ export function useNiveles() {
   }
 
   function startEdit(nivel) {
+    setError(null);
     setEditingNivel(nivel);
     setIsModalOpen(true);
   }
 
   function startCreate() {
+    setError(null);
     setEditingNivel(null);
     setIsModalOpen(true);
   }
