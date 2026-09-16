@@ -91,7 +91,7 @@ export default function TemaList({ temas, onEdit, onDelete, onVer, pasosPorTema,
     return (
       <div style={{ textAlign: "center", padding: "48px 0", color: "#999" }}>
         <BookOpen size={32} style={{ marginBottom: 12, opacity: 0.3, color: COLORS.teal }} />
-        <p style={{ fontStyle: "italic", fontSize: 14 }}>Este curso aún no tiene temas.</p>
+        <p style={{ fontStyle: "italic", fontSize: 14 }}>Esta serie aún no tiene academias.</p>
       </div>
     );
   }

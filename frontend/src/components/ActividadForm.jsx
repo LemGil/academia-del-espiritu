@@ -101,11 +101,11 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
       return;
     }
     if (!cursoTemp) {
-      setFormError("Debes seleccionar un curso.");
+      setFormError("Debes seleccionar una serie.");
       return;
     }
     if (!formData.tema_id) {
-      setFormError("Debes seleccionar un tema.");
+      setFormError("Debes seleccionar una academia.");
       return;
     }
     if (!formData.titulo.trim()) {
@@ -138,7 +138,7 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Curso</label>
+        <label style={labelStyle}>Serie</label>
         <select
           value={cursoTemp}
           onChange={(e) => {
@@ -148,7 +148,7 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
           style={inputStyle}
           disabled={!nivelTemp}
         >
-          <option value="">{nivelTemp ? "Seleccionar curso..." : "Primero selecciona un nivel"}</option>
+          <option value="">{nivelTemp ? "Seleccionar serie..." : "Primero selecciona un nivel"}</option>
           {filteredCursos.map((c) => (
             <option key={c.id} value={c.id}>{c.titulo}</option>
           ))}
@@ -156,7 +156,7 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Tema</label>
+        <label style={labelStyle}>Academia</label>
         <select
           name="tema_id"
           value={formData.tema_id}
@@ -164,7 +164,7 @@ export default function ActividadForm({ onSave, editingActividad, saving, onClos
           style={inputStyle}
           disabled={!cursoTemp}
         >
-          <option value="">{cursoTemp ? "Seleccionar tema..." : "Primero selecciona un curso"}</option>
+          <option value="">{cursoTemp ? "Seleccionar academia..." : "Primero selecciona una serie"}</option>
           {filteredTemas.map((t) => (
             <option key={t.id} value={t.id}>{t.titulo}</option>
           ))}

@@ -38,7 +38,7 @@ export function useCursos(nivelId = null) {
     setLoading(true);
     setError(null);
     const { data, error } = await getCursos(nivelId);
-    if (error) setError("No se pudieron cargar los cursos.");
+    if (error) setError("No se pudieron cargar las series.");
     setCursos(data || []);
     setLoading(false);
   }
@@ -55,7 +55,7 @@ export function useCursos(nivelId = null) {
     const { data: nuevoCurso, error } = await createCurso(payload);
 
     if (error) {
-      setError("No se pudo crear el curso.");
+      setError("No se pudo crear la serie.");
       setSaving(false);
       return;
     }
@@ -84,7 +84,7 @@ export function useCursos(nivelId = null) {
 
     const { error } = await updateCurso(id, { ...updates, imagen_url });
     if (error) {
-      setError("No se pudo actualizar el curso.");
+      setError("No se pudo actualizar la serie.");
       setSaving(false);
       return;
     }
@@ -97,7 +97,7 @@ export function useCursos(nivelId = null) {
     setError(null);
     const { error } = await deleteCurso(id);
     if (error) {
-      setError("No se pudo eliminar el curso.");
+      setError("No se pudo eliminar la serie.");
       return;
     }
     await fetchCursos();

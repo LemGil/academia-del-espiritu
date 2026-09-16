@@ -384,8 +384,8 @@ export default function MiProgreso({ estudiante }) {
             const cursosCompletados = nivelesMapa.reduce((a, n) => a + n.cursos.filter((c) => c.completado).length, 0);
             return [
               { label: "Pasos", value: `${completados}/${totalPasos}` },
-              { label: "Cursos", value: `${cursosCompletados}/${totalCursos}` },
-              { label: "Temas", value: `${mastered}/${mastered + enProgresoCount + noIniciados}` },
+              { label: "Series", value: `${cursosCompletados}/${totalCursos}` },
+              { label: "Academias", value: `${mastered}/${mastered + enProgresoCount + noIniciados}` },
             ];
           })().map((s) => (
             <div key={s.label} style={{ textAlign: "center" }}>
@@ -411,7 +411,7 @@ export default function MiProgreso({ estudiante }) {
         transition={{ delay: 0.1 }}
         style={{ marginBottom: 24 }}
       >
-        <SectionLabel>Progreso por curso</SectionLabel>
+        <SectionLabel>Progreso por serie</SectionLabel>
         <div style={{ background: "white", border: `1px solid ${COLORS.pergamino}`, borderRadius: 3, padding: "16px 20px" }}>
           {nivelesMapa.flatMap((n) =>
             n.cursos.map((c) => (
@@ -460,7 +460,7 @@ export default function MiProgreso({ estudiante }) {
         transition={{ delay: 0.15 }}
         style={{ marginBottom: 24 }}
       >
-        <SectionLabel>Progreso por temas</SectionLabel>
+        <SectionLabel>Progreso por academias</SectionLabel>
         <div style={{
           display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12,
         }}>

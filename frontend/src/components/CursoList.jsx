@@ -14,7 +14,7 @@ export default function CursoList({ cursos, onEdit, onDelete, onSelect }) {
       <div style={{ textAlign: "center", padding: "48px 0", color: "#999" }}>
         <BookOpen size={32} style={{ marginBottom: 12, opacity: 0.3, color: COLORS.teal }} />
         <p style={{ fontStyle: "italic", fontSize: 14 }}>
-          Este nivel aún no tiene cursos.
+          Este nivel aún no tiene series.
         </p>
       </div>
     );
@@ -68,7 +68,7 @@ export default function CursoList({ cursos, onEdit, onDelete, onSelect }) {
                 letterSpacing: "2px", textTransform: "uppercase",
                 marginBottom: 4,
               }}>
-                Curso {String(curso.orden).padStart(2, "0")}
+                Serie {String(curso.orden).padStart(2, "0")}
               </div>
               <h3 style={{
                 margin: "0 0 6px",

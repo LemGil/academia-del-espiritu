@@ -231,7 +231,7 @@ export default function PortalTemaDetalle({ tema, pasos = [], open, onClose, est
               flexShrink: 0,
             }}>
               <div>
-                <div style={{ fontSize: 10, color: COLORS.oro, fontFamily: "'Cinzel', serif", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 6 }}>Tema</div>
+                <div style={{ fontSize: 10, color: COLORS.oro, fontFamily: "'Cinzel', serif", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 6 }}>Academia</div>
                 <h2 style={{ margin: 0, fontFamily: "'Cinzel', serif", fontSize: 18, color: COLORS.marfil, fontWeight: 400, lineHeight: 1.4 }}>{tema.titulo}</h2>
               </div>
               <button onClick={onClose} style={{ background: "rgba(255,255,255,0.08)", border: "none", cursor: "pointer", color: COLORS.pergamino, borderRadius: 2, padding: 8 }}>

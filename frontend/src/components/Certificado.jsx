@@ -97,7 +97,7 @@ async function generarPDF({ tipo, nombreEstudiante, nombreCursoONivel, textoBibl
   y += 14;
 
   if (tipo === "curso") {
-    addItalicText("Ha completado satisfactoriamente el curso", y, 14, [136, 136, 136]);
+    addItalicText("Ha completado satisfactoriamente la serie", y, 14, [136, 136, 136]);
     y += 10;
   } else {
     addItalicText("Ha completado el", y, 14, [136, 136, 136]);
@@ -264,7 +264,7 @@ export default function Certificado({ tipo, nombreEstudiante, nombreCursoONivel,
               fontStyle: "italic", margin: "0 0 4px",
             }}>
               {tipo === "curso"
-                ? "Ha completado satisfactoriamente el curso"
+                ? "Ha completado satisfactoriamente la serie"
                 : "Ha completado el"}
             </p>
 

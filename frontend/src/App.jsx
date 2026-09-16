@@ -82,8 +82,8 @@ function Topbar({ breadcrumb, children }) {
 function Sidebar({ vista, onNavigate, onLogout }) {
   const items = [
     { icon: "ti-stack-2", label: "Niveles", key: "niveles" },
-    { icon: "ti-book", label: "Cursos", key: "cursos" },
-    { icon: "ti-file-text", label: "Temas", key: "temas" },
+    { icon: "ti-book", label: "Series", key: "cursos" },
+    { icon: "ti-file-text", label: "Academias", key: "temas" },
     { icon: "ti-pencil-alt", label: "Actividades", key: "actividades" },
     { icon: "ti-users", label: "Alumnos", key: "alumnos" },
     { icon: "ti-shield", label: "Perfiles", key: "perfiles" },
@@ -378,7 +378,7 @@ export default function App({ onLogout }) {
   }
 
   async function handleDeleteCursoGlobal(id) {
-    if (!window.confirm("¿Eliminar este curso? Esta acción no se puede deshacer.")) return;
+    if (!window.confirm("¿Eliminar esta serie? Esta acción no se puede deshacer.")) return;
     await supabase.from("cursos").delete().eq("id", id);
     await fetchTodosCursos();
   }
@@ -450,7 +450,7 @@ export default function App({ onLogout }) {
   }
 
   async function handleDeleteTemaGlobal(id) {
-    if (!window.confirm("¿Eliminar este tema? Esta acción no se puede deshacer.")) return;
+    if (!window.confirm("¿Eliminar esta academia? Esta acción no se puede deshacer.")) return;
     await supabase.from("temas").delete().eq("id", id);
     await fetchTodosTemas();
   }
@@ -852,20 +852,20 @@ export default function App({ onLogout }) {
         {/* ── VISTA TEMAS ── */}
         {selectedCurso ? (
           <>
-            <Topbar breadcrumb={`${selectedNivel?.nombre} › ${selectedCurso.titulo} › Temas`}>
+            <Topbar breadcrumb={`${selectedNivel?.nombre} › ${selectedCurso.titulo} › Academias`}>
               <BtnOutline onClick={() => setSelectedCurso(null)}>← Volver</BtnOutline>
-              <BtnGold onClick={startCreateTema}>+ Nuevo Tema</BtnGold>
+              <BtnGold onClick={startCreateTema}>+ Nueva Academia</BtnGold>
             </Topbar>
             <div style={{ padding: 28 }}>
               <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: COLORS.teal, fontWeight: 400, letterSpacing: 1, margin: "0 0 4px" }}>
                 {selectedCurso.titulo}
               </h2>
               <p style={{ fontSize: 13, color: "#888", fontStyle: "italic", margin: "0 0 24px" }}>
-                Temas y pasos de este curso
+                Academias y pasos de esta serie
               </p>
               <hr style={{ border: "none", borderTop: `1px solid ${COLORS.pergamino}`, marginBottom: 24 }} />
               {loadingTemas
-                ? <p style={{ color: "#888", fontStyle: "italic" }}>Cargando temas...</p>
+                ? <p style={{ color: "#888", fontStyle: "italic" }}>Cargando academias...</p>
                 : <TemaList
                     temas={temas}
                     onEdit={startEditTema}
@@ -877,7 +877,7 @@ export default function App({ onLogout }) {
                   />
               }
             </div>
-            <Modal open={isTemaModalOpen} onClose={closeTemaModal} title={editingTema ? "Editar Tema" : "Nuevo Tema"}>
+            <Modal open={isTemaModalOpen} onClose={closeTemaModal} title={editingTema ? "Editar Academia" : "Nueva Academia"}>
               <TemaForm onSave={handleSaveTema} editingTema={editingTema} saving={savingTemas} onClose={closeTemaModal} />
             </Modal>
             <Modal open={isPasoModalOpen} onClose={() => { setIsPasoModalOpen(false); clearEditingPaso(); }} title={editingPaso ? "Editar Paso" : "Nuevo Paso"}>
@@ -890,22 +890,22 @@ export default function App({ onLogout }) {
           <>
             <Topbar breadcrumb={`Niveles › ${selectedNivel.nombre}`}>
               <BtnOutline onClick={() => setSelectedNivel(null)}>← Volver</BtnOutline>
-              <BtnGold onClick={startCreateCurso}>+ Nuevo Curso</BtnGold>
+              <BtnGold onClick={startCreateCurso}>+ Nueva Serie</BtnGold>
             </Topbar>
             <div style={{ padding: 28 }}>
               <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: COLORS.teal, fontWeight: 400, letterSpacing: 1, margin: "0 0 4px" }}>
                 {selectedNivel.nombre}
               </h2>
               <p style={{ fontSize: 13, color: "#888", fontStyle: "italic", margin: "0 0 24px" }}>
-                Selecciona un curso para gestionar sus temas
+                Selecciona una serie para gestionar sus academias
               </p>
               <hr style={{ border: "none", borderTop: `1px solid ${COLORS.pergamino}`, marginBottom: 24 }} />
               {loadingCursos
-                ? <p style={{ color: "#888", fontStyle: "italic" }}>Cargando cursos...</p>
+                ? <p style={{ color: "#888", fontStyle: "italic" }}>Cargando series...</p>
                 : <CursoList cursos={cursos} onEdit={startEditCurso} onDelete={removeCurso} onSelect={setSelectedCurso} />
               }
             </div>
-            <Modal open={isCursoModalOpen} onClose={closeCursoModal} title={editingCurso ? "Editar Curso" : "Nuevo Curso"}>
+            <Modal open={isCursoModalOpen} onClose={closeCursoModal} title={editingCurso ? "Editar Serie" : "Nueva Serie"}>
               <CursoForm onSave={handleSaveCurso} editingCurso={editingCurso} saving={savingCursos} onClose={closeCursoModal} />
             </Modal>
           </>
@@ -1332,11 +1332,11 @@ export default function App({ onLogout }) {
         ) : vista === "cursos" ? (
           /* ── VISTA TODOS LOS CURSOS ── */
           <>
-            <Topbar breadcrumb="Todos los Cursos">
+            <Topbar breadcrumb="Todas las Series">
               <BtnGold onClick={() => {
                 setEditingCursoGlobal(null);
                 setIsCursoGlobalModalOpen(true);
-              }}>+ Nuevo Curso</BtnGold>
+              }}>+ Nueva Serie</BtnGold>
             </Topbar>
             <div style={{ padding: 28 }}>
               <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: COLORS.teal, fontWeight: 400, letterSpacing: 1, margin: "0 0 4px" }}>
@@ -1356,9 +1356,9 @@ export default function App({ onLogout }) {
               </div>
 
               {loadingTodosCursos ? (
-                <p style={{ color: "#888", fontStyle: "italic" }}>Cargando cursos...</p>
+                <p style={{ color: "#888", fontStyle: "italic" }}>Cargando series...</p>
               ) : todosCursos.filter(n => (filtroNivelCursos ? n.id == filtroNivelCursos : true)).length === 0 ? (
-                <p style={{ fontSize: 13, color: "#bbb", fontStyle: "italic" }}>No hay cursos registrados.</p>
+                <p style={{ fontSize: 13, color: "#bbb", fontStyle: "italic" }}>No hay series registradas.</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                   {todosCursos.filter(n => (filtroNivelCursos ? n.id == filtroNivelCursos : true)).map((nivel) => (
@@ -1432,7 +1432,7 @@ export default function App({ onLogout }) {
                 </div>
               )}
             </div>
-            <Modal open={isCursoGlobalModalOpen} onClose={() => { setIsCursoGlobalModalOpen(false); setEditingCursoGlobal(null); }} title={editingCursoGlobal ? "Editar Curso" : "Nuevo Curso"}>
+            <Modal open={isCursoGlobalModalOpen} onClose={() => { setIsCursoGlobalModalOpen(false); setEditingCursoGlobal(null); }} title={editingCursoGlobal ? "Editar Serie" : "Nueva Serie"}>
               <CursoForm onSave={handleSaveCursoGlobal} editingCurso={editingCursoGlobal} saving={cursosSaving} onClose={() => { setIsCursoGlobalModalOpen(false); setEditingCursoGlobal(null); }} niveles={niveles} />
             </Modal>
           </>
@@ -1440,11 +1440,11 @@ export default function App({ onLogout }) {
         ) : vista === "temas" ? (
           /* ── VISTA TODOS LOS TEMAS ── */
           <>
-            <Topbar breadcrumb="Todos los Temas">
+            <Topbar breadcrumb="Todas las Academias">
               <BtnGold onClick={() => {
                 setEditingTemaGlobal(null);
                 setIsTemaGlobalModalOpen(true);
-              }}>+ Nuevo Tema</BtnGold>
+              }}>+ Nueva Academia</BtnGold>
             </Topbar>
             <div style={{ padding: 28 }}>
               <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: COLORS.teal, fontWeight: 400, letterSpacing: 1, margin: "0 0 4px" }}>
@@ -1462,19 +1462,19 @@ export default function App({ onLogout }) {
                   {niveles.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
                 </select>
                 <select value={filtroCursoTema} onChange={(e) => setFiltroCursoTema(e.target.value)} style={{ padding: "8px 12px", borderRadius: 2, border: `1px solid ${COLORS.pergamino}` }} disabled={!filtroNivelTema}>
-                  <option value="">Todos los cursos</option>
+                  <option value="">Todas las series</option>
                   {allCursosFlat.filter(c => c.nivel_id == filtroNivelTema).map(c => <option key={c.id} value={c.id}>{c.titulo}</option>)}
                 </select>
                 <button onClick={() => { setFiltroNivelTema(""); setFiltroCursoTema(""); }} style={{ padding: "8px 12px", borderRadius: 2, border: `1px solid ${COLORS.pergamino}`, background: "transparent", cursor: "pointer" }}>Limpiar</button>
               </div>
 
               {loadingTodosTemas ? (
-                <p style={{ color: "#888", fontStyle: "italic" }}>Cargando temas...</p>
+                <p style={{ color: "#888", fontStyle: "italic" }}>Cargando academias...</p>
               ) : todosTemas.filter(item => {
                 return (filtroNivelTema ? item.nivel.id == filtroNivelTema : true) &&
                        (filtroCursoTema ? item.curso.id == filtroCursoTema : true);
               }).length === 0 ? (
-                <p style={{ fontSize: 13, color: "#bbb", fontStyle: "italic" }}>No se encontraron temas.</p>
+                <p style={{ fontSize: 13, color: "#bbb", fontStyle: "italic" }}>No se encontraron academias.</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                   {todosTemas.filter(item => {
@@ -1545,7 +1545,7 @@ export default function App({ onLogout }) {
                 </div>
               )}
             </div>
-            <Modal open={isTemaGlobalModalOpen} onClose={() => { setIsTemaGlobalModalOpen(false); setEditingTemaGlobal(null); }} title={editingTemaGlobal ? "Editar Tema" : "Nuevo Tema"}>
+            <Modal open={isTemaGlobalModalOpen} onClose={() => { setIsTemaGlobalModalOpen(false); setEditingTemaGlobal(null); }} title={editingTemaGlobal ? "Editar Academia" : "Nueva Academia"}>
               <TemaForm onSave={handleSaveTemaGlobal} editingTema={editingTemaGlobal} saving={temasSaving} onClose={() => { setIsTemaGlobalModalOpen(false); setEditingTemaGlobal(null); }} niveles={niveles} cursos={allCursosFlat} />
             </Modal>
           </>
@@ -1574,11 +1574,11 @@ export default function App({ onLogout }) {
                   {niveles.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
                 </select>
                 <select value={filtroCurso} onChange={(e) => { setFiltroCurso(e.target.value); setFiltroTema(""); }} style={{ padding: "8px 12px", borderRadius: 2, border: `1px solid ${COLORS.pergamino}` }} disabled={!filtroNivel}>
-                  <option value="">Todos los cursos</option>
+                  <option value="">Todas las series</option>
                   {allCursosAct.filter(c => c.nivel_id == filtroNivel).map(c => <option key={c.id} value={c.id}>{c.titulo}</option>)}
                 </select>
                 <select value={filtroTema} onChange={(e) => setFiltroTema(e.target.value)} style={{ padding: "8px 12px", borderRadius: 2, border: `1px solid ${COLORS.pergamino}` }} disabled={!filtroCurso}>
-                  <option value="">Todos los temas</option>
+                  <option value="">Todas las academias</option>
                   {allTemasAct.filter(t => t.curso_id == filtroCurso).map(t => <option key={t.id} value={t.id}>{t.titulo}</option>)}
                 </select>
                 <button onClick={() => { setFiltroNivel(""); setFiltroCurso(""); setFiltroTema(""); }} style={{ padding: "8px 12px", borderRadius: 2, border: `1px solid ${COLORS.pergamino}`, background: "transparent", cursor: "pointer" }}>Limpiar</button>
@@ -1752,11 +1752,11 @@ export default function App({ onLogout }) {
                       <h3 style={{ color: COLORS.oro }}>{n.nombre}</h3>
                       {n.cursos.map(c => (
                         <div key={c.id} style={{ marginTop: 10 }}>
-                          <p style={{ fontWeight: 600 }}>Curso: {c.titulo} {c.completado ? "✅" : "⏳"}</p>
+                          <p style={{ fontWeight: 600 }}>Serie: {c.titulo} {c.completado ? "✅" : "⏳"}</p>
                           <div style={{ marginLeft: 15 }}>
                             {c.temas.map(t => (
                               <div key={t.id} style={{ marginTop: 5 }}>
-                                <p>Tema: {t.titulo} ({t.pasos.filter(p => p.status === 'aprobada').length}/{t.pasos.length} pasos aprobados)</p>
+                                <p>Academia: {t.titulo} ({t.pasos.filter(p => p.status === 'aprobada').length}/{t.pasos.length} pasos aprobados)</p>
                                 <div style={{ height: 6, background: COLORS.pergamino, width: 200 }}><div style={{ height: "100%", background: COLORS.oro, width: `${t.pasos.length > 0 ? (t.pasos.filter(p => p.status === 'aprobada').length / t.pasos.length) * 100 : 0}%` }}></div></div>
                               </div>
                             ))}
@@ -1845,7 +1845,7 @@ export default function App({ onLogout }) {
                         </p>
                         <p style={{ margin: "2px 0 0", fontSize: 11, color: "#888", fontStyle: "italic" }}>
                           {cert.curso_id
-                            ? `Curso: ${cert.cursos?.titulo || "?"}`
+                            ? `Serie: ${cert.cursos?.titulo || "?"}`
                             : `Nivel: ${cert.niveles?.nombre || "?"}`}
                           {' · '}
                           {new Date(cert.emitido_at).toLocaleDateString("es-ES")}

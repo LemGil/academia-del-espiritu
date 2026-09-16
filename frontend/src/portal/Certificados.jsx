@@ -143,7 +143,7 @@ export default function Certificados({ estudiante }) {
         ? `${estudiante.nombre || ""} ${estudiante.apellido || ""}`.trim() || "Estudiante"
         : "Estudiante",
       nombreCursoONivel: esCurso
-        ? (cert.cursos?.titulo || "Curso")
+        ? (cert.cursos?.titulo || "Serie")
         : (cert.niveles?.nombre || "Nivel"),
       textoBiblico: esCurso
         ? (cert.cursos?.texto_biblico || "")
@@ -194,7 +194,7 @@ export default function Certificados({ estudiante }) {
               Aún no tienes certificados.
             </p>
             <p style={{ fontStyle: "italic", fontSize: 12, color: "#666666", margin: "6px 0 0" }}>
-              Completa cursos y niveles para obtenerlos.
+              Completa series y niveles para obtenerlos.
             </p>
           </div>
         ) : (
@@ -207,7 +207,7 @@ export default function Certificados({ estudiante }) {
               {certificados.map((cert, idx) => {
                 const esCurso = !!cert.curso_id;
                 const nombre = esCurso
-                  ? (cert.cursos?.titulo || "Curso")
+                  ? (cert.cursos?.titulo || "Serie")
                   : (cert.niveles?.nombre || "Nivel");
                 const codigo = cert.codigo;
                 return (
@@ -248,7 +248,7 @@ export default function Certificados({ estudiante }) {
                       fontFamily: "'Cinzel', serif", letterSpacing: "0.5px",
                       textAlign: "center",
                     }}>
-                      {esCurso ? "CURSO" : "NIVEL"}
+                      {esCurso ? "SERIE" : "NIVEL"}
                     </p>
                     <p style={{
                       margin: "0 0 14px",
@@ -359,7 +359,7 @@ export default function Certificados({ estudiante }) {
                       fontFamily: "'Cinzel', serif",
                       fontSize: 13, color: COLORS.teal,
                     }}>
-                      {p.tipo === "curso" ? `Curso: ${p.nombre}` : `Nivel: ${p.nombre}`}
+                      {p.tipo === "curso" ? `Serie: ${p.nombre}` : `Nivel: ${p.nombre}`}
                     </span>
                     <span style={{
                       display: "block", fontSize: 11, color: "#666666",
@@ -367,7 +367,7 @@ export default function Certificados({ estudiante }) {
                     }}>
                       {p.pct >= 100
                         ? "Completado — certificado pendiente de generación"
-                        : `${p.completados}/${p.total} ${p.tipo === "curso" ? "pasos" : "cursos"} completados`}
+                        : `${p.completados}/${p.total} ${p.tipo === "curso" ? "pasos" : "series"} completados`}
                     </span>
                   </div>
                   {p.pct < 100 && (

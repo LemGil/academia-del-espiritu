@@ -82,7 +82,7 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
     setFormError(null);
 
     if (!formData.titulo.trim()) {
-      setFormError("El título del curso es obligatorio.");
+      setFormError("El título de la serie es obligatorio.");
       return;
     }
     if (niveles.length > 0 && !formData.nivel_id) {
@@ -97,7 +97,7 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
     <form onSubmit={handleSubmit}>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Título del Curso</label>
+        <label style={labelStyle}>Título de la Serie</label>
         <input
           type="text"
           name="titulo"
@@ -115,7 +115,7 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
           value={formData.descripcion}
           onChange={handleChange}
           rows={3}
-          placeholder="Describe de qué trata el curso..."
+          placeholder="Describe de qué trata la serie..."
           style={{ ...inputStyle, resize: "vertical" }}
         />
       </div>
@@ -203,7 +203,7 @@ export default function CursoForm({ onSave, editingCurso, saving, onClose, nivel
             opacity: saving ? 0.7 : 1,
           }}
         >
-          {saving ? "Guardando..." : editingCurso ? "Guardar Cambios" : "Crear Curso"}
+          {saving ? "Guardando..." : editingCurso ? "Guardar Cambios" : "Crear Serie"}
         </button>
         <button
           type="button"

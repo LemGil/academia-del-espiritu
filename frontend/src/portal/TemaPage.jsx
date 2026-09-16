@@ -402,7 +402,7 @@ export default function TemaPage({ estudiante }) {
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.marfil }}>
-        <p style={{ color: "#666666", fontStyle: "italic", fontSize: 15 }}>Cargando tema...</p>
+        <p style={{ color: "#666666", fontStyle: "italic", fontSize: 15 }}>Cargando academia...</p>
       </div>
     );
   }
@@ -410,7 +410,7 @@ export default function TemaPage({ estudiante }) {
   if (!tema) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.marfil }}>
-        <p style={{ color: "#666666", fontStyle: "italic", fontSize: 15 }}>Tema no encontrado.</p>
+        <p style={{ color: "#666666", fontStyle: "italic", fontSize: 15 }}>Academia no encontrada.</p>
       </div>
     );
   }
@@ -443,7 +443,7 @@ export default function TemaPage({ estudiante }) {
               fontSize: 10, color: COLORS.oro,
               fontFamily: "'Cinzel', serif", letterSpacing: "2px", textTransform: "uppercase",
             }}>
-              {tema.cursos?.titulo || "Curso"}
+              {tema.cursos?.titulo || "Serie"}
             </div>
             <h2 style={{
               margin: "4px 0 0", fontFamily: "'Cinzel', serif",

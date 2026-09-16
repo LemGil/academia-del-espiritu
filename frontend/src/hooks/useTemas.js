@@ -23,7 +23,7 @@ export function useTemas(cursoId = null) {
     setLoading(true);
     setError(null);
     const { data, error } = await getTemas(cursoId);
-    if (error) setError("No se pudieron cargar los temas.");
+    if (error) setError("No se pudieron cargar las academias.");
     setTemas(data || []);
     setLoading(false);
   }
@@ -38,7 +38,7 @@ export function useTemas(cursoId = null) {
     const payload = { ...tema, curso_id: cursoId };
     const { error } = await createTema(payload);
     if (error) {
-      setError("No se pudo crear el tema.");
+      setError("No se pudo crear la academia.");
       setSaving(false);
       return;
     }
@@ -51,7 +51,7 @@ export function useTemas(cursoId = null) {
     setError(null);
     const { error } = await updateTema(id, updates);
     if (error) {
-      setError("No se pudo actualizar el tema.");
+      setError("No se pudo actualizar la academia.");
       setSaving(false);
       return;
     }
@@ -63,7 +63,7 @@ export function useTemas(cursoId = null) {
     setError(null);
     const { error } = await deleteTema(id);
     if (error) {
-      setError("No se pudo eliminar el tema.");
+      setError("No se pudo eliminar la academia.");
       return;
     }
     await fetchTemas();

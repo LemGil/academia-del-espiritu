@@ -218,7 +218,7 @@ export default function MisCursos({ estudiante, onSelectCurso }) {
           fontFamily: "'Cinzel', serif", fontSize: 22, color: COLORS.teal,
           fontWeight: 400, letterSpacing: "1px", margin: "0 0 4px",
         }}>
-          Mis Cursos
+          Mis Series
         </h1>
         <p style={{ fontSize: 14, color: "#666666", fontStyle: "italic", margin: 0 }}>
           {estudiante?.niveles?.nombre || "Sin nivel asignado"}
@@ -259,7 +259,7 @@ export default function MisCursos({ estudiante, onSelectCurso }) {
       {todosCursos.length === 0 ? (
         <div style={{ textAlign: "center", padding: "64px 0", color: "#666666" }}>
           <BookOpen size={40} style={{ marginBottom: 16, opacity: 0.3, color: COLORS.teal }} />
-          <p style={{ fontStyle: "italic", fontSize: 15 }}>No hay cursos disponibles.</p>
+          <p style={{ fontStyle: "italic", fontSize: 15 }}>No hay series disponibles.</p>
         </div>
       ) : (
         <>

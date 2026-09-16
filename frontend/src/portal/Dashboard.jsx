@@ -280,7 +280,7 @@ export default function Dashboard({ estudiante, onNavigate, onSelectCurso }) {
               {estudiante?.niveles?.nombre || "Sin nivel"}
             </span>
             <p style={{ margin: "2px 0 0", fontSize: 12, color: "#666666", fontStyle: "italic" }}>
-              {data?.cursosCompletados || 0} cursos &middot; {data?.nivelesCompletados || 0} niveles completados
+              {data?.cursosCompletados || 0} series &middot; {data?.nivelesCompletados || 0} niveles completados
             </p>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -326,7 +326,7 @@ export default function Dashboard({ estudiante, onNavigate, onSelectCurso }) {
           marginBottom: 24,
         }}
       >
-        <QuickButton icon={BookOpen} label="Mis Cursos" onClick={() => onNavigate?.("cursos")} />
+        <QuickButton icon={BookOpen} label="Mis Series" onClick={() => onNavigate?.("cursos")} />
         <QuickButton icon={BarChart3} label="Mi Progreso" onClick={() => onNavigate?.("progreso")} />
         <QuickButton icon={Award} label="Certificados" onClick={() => onNavigate?.("certificados")} />
       </motion.div>
@@ -408,7 +408,7 @@ export default function Dashboard({ estudiante, onNavigate, onSelectCurso }) {
               margin: 0, fontSize: 14, color: "#666666",
               fontStyle: "italic",
             }}>
-              Aún no has comenzado. Explora tus cursos para dar el primer paso.
+              Aún no has comenzado. Explora tus series para dar el primer paso.
             </p>
           </div>
         )}

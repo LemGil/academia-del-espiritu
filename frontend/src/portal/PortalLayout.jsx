@@ -11,7 +11,7 @@ const COLORS = {
 
 const NAV_ITEMS = [
   { key: "inicio", label: "Inicio", icon: LayoutDashboard },
-  { key: "cursos", label: "Mis Cursos", icon: BookOpen },
+  { key: "cursos", label: "Mis Series", icon: BookOpen },
   { key: "progreso", label: "Mi Progreso", icon: BarChart3 },
   { key: "certificados", label: "Certificados", icon: Award },
 ];

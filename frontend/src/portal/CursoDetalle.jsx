@@ -88,7 +88,7 @@ export default function CursoDetalle({ curso, readOnly = false, onBack }) {
             letterSpacing: "2px",
             textTransform: "uppercase",
           }}>
-            Curso
+            Serie
           </div>
           <div style={{
             fontSize: 15,
@@ -120,7 +120,7 @@ export default function CursoDetalle({ curso, readOnly = false, onBack }) {
       {/* Content */}
       <div style={{ padding: 28, flex: 1, overflowY: "auto" }}>
         {loading ? (
-          <p style={{ color: "#666666", fontStyle: "italic" }}>Cargando temas...</p>
+          <p style={{ color: "#666666", fontStyle: "italic" }}>Cargando academias...</p>
         ) : temas.length === 0 ? (
           <div style={{ textAlign: "center", padding: "64px 0", color: "#666666" }}>
             <BookOpen size={40} style={{ marginBottom: 16, opacity: 0.3, color: COLORS.teal }} />

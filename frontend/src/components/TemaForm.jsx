@@ -104,7 +104,7 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
     setFormError(null);
 
     if (!formData.titulo.trim()) {
-      setFormError("El título del tema es obligatorio.");
+      setFormError("El título de la academia es obligatorio.");
       return;
     }
     if (niveles.length > 0 && !nivelTemp) {
@@ -112,7 +112,7 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
       return;
     }
     if (niveles.length > 0 && !formData.curso_id) {
-      setFormError("Debes seleccionar un curso.");
+      setFormError("Debes seleccionar una serie.");
       return;
     }
 
@@ -143,7 +143,7 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Curso</label>
+            <label style={labelStyle}>Serie</label>
             <select
               name="curso_id"
               value={formData.curso_id}
@@ -151,7 +151,7 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
               style={inputStyle}
               disabled={!nivelTemp}
             >
-              <option value="">{nivelTemp ? "Seleccionar curso..." : "Primero selecciona un nivel"}</option>
+              <option value="">{nivelTemp ? "Seleccionar serie..." : "Primero selecciona un nivel"}</option>
               {filteredCursos.map((c) => (
                 <option key={c.id} value={c.id}>{c.titulo}</option>
               ))}
@@ -162,7 +162,7 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
 
       {/* Datos principales */}
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Título del Tema</label>
+        <label style={labelStyle}>Título de la Academia</label>
         <input
           type="text"
           name="titulo"
@@ -179,7 +179,7 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
           name="descripcion"
           value={formData.descripcion}
           onChange={handleChange}
-          placeholder="Breve descripción del tema..."
+          placeholder="Breve descripción de la academia..."
           rows={3}
           style={{ ...inputStyle, resize: "vertical", fontStyle: "italic" }}
         />
@@ -321,7 +321,7 @@ export default function TemaForm({ onSave, editingTema, saving, onClose, niveles
             opacity: saving ? 0.7 : 1,
           }}
         >
-          {saving ? "Guardando..." : editingTema ? "Guardar Cambios" : "Crear Tema"}
+          {saving ? "Guardando..." : editingTema ? "Guardar Cambios" : "Crear Academia"}
         </button>
         <button
           type="button"

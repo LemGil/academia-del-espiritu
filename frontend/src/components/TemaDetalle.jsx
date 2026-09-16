@@ -124,7 +124,7 @@ export default function TemaDetalle({ tema, pasos = [], open, onClose }) {
                   letterSpacing: "2px", textTransform: "uppercase",
                   marginBottom: 6,
                 }}>
-                  Tema
+                  Academia
                 </div>
                 <h2 style={{
                   margin: 0,
@@ -340,7 +340,7 @@ export default function TemaDetalle({ tema, pasos = [], open, onClose }) {
               {!tema.video_url && !tema.contenido && !tema.pdf_url && pasos.length === 0 && (
                 <div style={{ textAlign: "center", padding: "48px 0", color: "#bbb" }}>
                   <p style={{ fontStyle: "italic", fontSize: 14 }}>
-                    Este tema aún no tiene contenido.
+                    Esta academia aún no tiene contenido.
                   </p>
                 </div>
               )}
