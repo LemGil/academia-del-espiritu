@@ -494,6 +494,30 @@ export default function App({ onLogout }) {
   const [preguntasPasoTarget, setPreguntasPasoTarget] = useState(null);
   const [preguntasList, setPreguntasList] = useState([]);
 
+  // ── Plantilla de actividades ──
+  const TIPOS_ACTIVIDAD = [
+    { value: "leer_texto", label: "Confirmar lectura" },
+    { value: "ver_video", label: "Confirmar video visto" },
+    { value: "responder_preguntas", label: "Responder preguntas" },
+    { value: "unirse_grupo", label: "Confirmar grupo" },
+    { value: "bautizarse", label: "Bautizarse (Manual)" },
+    { value: "otro", label: "Acción libre" },
+  ];
+  const [plantilla, setPlantilla] = useState([]);
+  const [isPlantillaModalOpen, setIsPlantillaModalOpen] = useState(false);
+  const [plantillaForm, setPlantillaForm] = useState({ tipo: "leer_texto", titulo: "", descripcion: "" });
+  const [editingPlantillaId, setEditingPlantillaId] = useState(null);
+  const [plantillaSaving, setPlantillaSaving] = useState(false);
+
+  // ── Aplicar plantilla a academias ──
+  const [isAplicarModalOpen, setIsAplicarModalOpen] = useState(false);
+  const [aplNivel, setAplNivel] = useState("");
+  const [aplCurso, setAplCurso] = useState("");
+  const [aplTemasSel, setAplTemasSel] = useState([]);
+  const [aplActsSel, setAplActsSel] = useState(null); // null = todas
+  const [aplicando, setAplicando] = useState(false);
+  const [aplResultado, setAplResultado] = useState(null);
+
   useEffect(() => {
     if (vistaActiva === "actividades") fetchActividades();
   }, [vistaActiva]);
@@ -556,6 +580,134 @@ export default function App({ onLogout }) {
     if (!window.confirm("¿Eliminar esta actividad? Esta acción no se puede deshacer.")) return;
     await supabase.from("pasos").delete().eq("id", id);
     await fetchActividades();
+  }
+
+  // ── Plantilla de actividades: gestión ──
+  async function fetchPlantilla() {
+    const { data } = await supabase
+      .from("plantilla_actividades")
+      .select("*")
+      .order("orden", { ascending: true });
+    setPlantilla(data || []);
+  }
+
+  function abrirPlantilla() {
+    setPlantillaForm({ tipo: "leer_texto", titulo: "", descripcion: "" });
+    setEditingPlantillaId(null);
+    fetchPlantilla();
+    setIsPlantillaModalOpen(true);
+  }
+
+  async function handleSavePlantillaItem(e) {
+    e.preventDefault();
+    if (!plantillaForm.titulo.trim()) return;
+    setPlantillaSaving(true);
+    const payload = {
+      tipo: plantillaForm.tipo,
+      titulo: plantillaForm.titulo.trim(),
+      descripcion: plantillaForm.descripcion.trim() || null,
+    };
+    if (editingPlantillaId) {
+      await supabase.from("plantilla_actividades").update(payload).eq("id", editingPlantillaId);
+    } else {
+      const maxOrden = plantilla.reduce((m, p) => Math.max(m, p.orden || 0), 0);
+      await supabase.from("plantilla_actividades").insert([{ ...payload, orden: maxOrden + 1 }]);
+    }
+    setPlantillaForm({ tipo: "leer_texto", titulo: "", descripcion: "" });
+    setEditingPlantillaId(null);
+    await fetchPlantilla();
+    setPlantillaSaving(false);
+  }
+
+  function handleEditPlantillaItem(p) {
+    setEditingPlantillaId(p.id);
+    setPlantillaForm({ tipo: p.tipo, titulo: p.titulo || "", descripcion: p.descripcion || "" });
+  }
+
+  async function handleDeletePlantillaItem(id) {
+    if (!window.confirm("¿Eliminar esta actividad de la plantilla?")) return;
+    await supabase.from("plantilla_actividades").delete().eq("id", id);
+    await fetchPlantilla();
+  }
+
+  async function handleMovePlantillaItem(id, dir) {
+    const idx = plantilla.findIndex(p => p.id === id);
+    const j = idx + dir;
+    if (idx < 0 || j < 0 || j >= plantilla.length) return;
+    const a = plantilla[idx], b = plantilla[j];
+    await supabase.from("plantilla_actividades").update({ orden: b.orden }).eq("id", a.id);
+    await supabase.from("plantilla_actividades").update({ orden: a.orden }).eq("id", b.id);
+    await fetchPlantilla();
+  }
+
+  // ── Plantilla de actividades: aplicar a academias ──
+  function abrirAplicarPlantilla() {
+    setAplNivel("");
+    setAplCurso("");
+    setAplTemasSel([]);
+    setAplActsSel(null);
+    setAplResultado(null);
+    fetchPlantilla();
+    setIsAplicarModalOpen(true);
+  }
+
+  function toggleAplTema(id) {
+    setAplTemasSel(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
+  }
+
+  function toggleAplAct(id) {
+    setAplActsSel(prev => {
+      const base = prev === null ? plantilla.map(p => p.id) : prev;
+      return base.includes(id) ? base.filter(x => x !== id) : [...base, id];
+    });
+  }
+
+  async function handleAplicarPlantilla() {
+    const acts = aplActsSel === null ? plantilla : plantilla.filter(p => aplActsSel.includes(p.id));
+    if (aplTemasSel.length === 0 || acts.length === 0) return;
+    setAplicando(true);
+    setAplResultado(null);
+
+    const { data: existentes } = await supabase
+      .from("pasos")
+      .select("tema_id, tipo, titulo, orden")
+      .in("tema_id", aplTemasSel);
+    const porTema = {};
+    (existentes || []).forEach(p => {
+      (porTema[p.tema_id] = porTema[p.tema_id] || []).push(p);
+    });
+
+    const nuevos = [];
+    let omitidas = 0;
+    for (const temaId of aplTemasSel) {
+      const ex = porTema[temaId] || [];
+      let orden = ex.reduce((m, p) => Math.max(m, p.orden || 0), 0);
+      for (const act of acts) {
+        // No duplicar: mismo tipo ya existe (para "otro", además mismo título)
+        const duplicada = ex.some(p => p.tipo === act.tipo && (act.tipo !== "otro" || p.titulo === act.titulo));
+        if (duplicada) { omitidas++; continue; }
+        orden += 1;
+        nuevos.push({ tema_id: temaId, tipo: act.tipo, titulo: act.titulo, descripcion: act.descripcion, orden });
+        ex.push({ tipo: act.tipo, titulo: act.titulo, orden });
+      }
+    }
+
+    if (nuevos.length > 0) {
+      const { error } = await supabase.from("pasos").insert(nuevos);
+      if (error) {
+        console.error(error);
+        setAplResultado({ error: "No se pudieron crear las actividades." });
+        setAplicando(false);
+        return;
+      }
+    }
+    setAplResultado({ creadas: nuevos.length, omitidas, academias: aplTemasSel.length });
+    setAplicando(false);
+    await fetchActividades();
+  }
+
+  function tipoLabel(value) {
+    return (TIPOS_ACTIVIDAD.find(t => t.value === value) || {}).label || value;
   }
 
   // ── Gestión de Preguntas (Quiz) ──
@@ -1597,6 +1749,8 @@ export default function App({ onLogout }) {
           /* ── VISTA ACTIVIDADES ── */
           <>
             <Topbar breadcrumb="Actividades">
+              <BtnOutline onClick={abrirPlantilla}>Plantilla</BtnOutline>
+              <BtnOutline onClick={abrirAplicarPlantilla}>Aplicar plantilla</BtnOutline>
               <BtnGold onClick={() => {
                 setEditingActividad(null);
                 setErrorActividad(null);
@@ -1752,6 +1906,142 @@ export default function App({ onLogout }) {
               <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                 <button onClick={handleAddPregunta} style={{ flex: 1, background: COLORS.oro, color: COLORS.teal, border: "none", padding: "9px 0", borderRadius: 2, fontFamily: "'Cinzel', serif", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>+ Agregar Pregunta</button>
                 <button onClick={() => { setIsPreguntasModalOpen(false); setPreguntasList([]); setPreguntasPasoTarget(null); }} style={{ flex: 1, background: "transparent", color: COLORS.teal, border: `1px solid ${COLORS.pergamino}`, padding: "9px 0", borderRadius: 2, fontFamily: "'Cinzel', serif", fontSize: 11, cursor: "pointer" }}>Cerrar</button>
+              </div>
+            </Modal>
+            <Modal open={isPlantillaModalOpen} onClose={() => { setIsPlantillaModalOpen(false); setEditingPlantillaId(null); }} title="Plantilla de Actividades">
+              <p style={{ fontSize: 12, color: "#888", fontStyle: "italic", margin: "0 0 16px", fontFamily: "'EB Garamond', Georgia, serif" }}>
+                Define aquí el juego estándar de actividades. Luego, con "Aplicar plantilla", podrás crearlas de una sola vez en las academias que elijas.
+              </p>
+              <form onSubmit={handleSavePlantillaItem} style={{ background: "white", border: `1px solid ${COLORS.pergamino}`, borderRadius: 4, padding: 14, marginBottom: 16 }}>
+                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                  <select
+                    value={plantillaForm.tipo}
+                    onChange={(e) => setPlantillaForm(prev => ({ ...prev, tipo: e.target.value }))}
+                    style={{ flex: "0 0 170px", padding: "8px 10px", border: `1px solid ${COLORS.pergamino}`, borderRadius: 2, fontSize: 13, outline: "none", background: "white", color: COLORS.teal }}
+                  >
+                    {TIPOS_ACTIVIDAD.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Título de la actividad"
+                    value={plantillaForm.titulo}
+                    onChange={(e) => setPlantillaForm(prev => ({ ...prev, titulo: e.target.value }))}
+                    style={{ flex: 1, padding: "8px 10px", border: `1px solid ${COLORS.pergamino}`, borderRadius: 2, fontSize: 13, outline: "none", fontFamily: "'EB Garamond', Georgia, serif" }}
+                  />
+                </div>
+                <textarea
+                  placeholder="Descripción / instrucciones (opcional)"
+                  rows={2}
+                  value={plantillaForm.descripcion}
+                  onChange={(e) => setPlantillaForm(prev => ({ ...prev, descripcion: e.target.value }))}
+                  style={{ width: "100%", padding: "8px 10px", border: `1px solid ${COLORS.pergamino}`, borderRadius: 2, fontSize: 13, outline: "none", boxSizing: "border-box", marginBottom: 10, fontFamily: "'EB Garamond', Georgia, serif", resize: "vertical" }}
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button type="submit" disabled={plantillaSaving} style={{ flex: 1, background: COLORS.oro, color: COLORS.teal, border: "none", padding: "9px 0", borderRadius: 2, fontFamily: "'Cinzel', serif", fontSize: 11, fontWeight: 600, letterSpacing: "1px", cursor: plantillaSaving ? "not-allowed" : "pointer", opacity: plantillaSaving ? 0.7 : 1 }}>
+                    {plantillaSaving ? "Guardando..." : editingPlantillaId ? "Guardar cambios" : "+ Agregar a la plantilla"}
+                  </button>
+                  {editingPlantillaId && (
+                    <button type="button" onClick={() => { setEditingPlantillaId(null); setPlantillaForm({ tipo: "leer_texto", titulo: "", descripcion: "" }); }} style={{ background: "transparent", color: COLORS.teal, border: `1px solid ${COLORS.pergamino}`, padding: "9px 16px", borderRadius: 2, fontFamily: "'Cinzel', serif", fontSize: 11, cursor: "pointer" }}>
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </form>
+              {plantilla.length === 0 ? (
+                <p style={{ fontSize: 13, color: "#bbb", fontStyle: "italic", fontFamily: "'EB Garamond', Georgia, serif" }}>La plantilla está vacía. Agrega la primera actividad arriba.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {plantilla.map((p, idx) => (
+                    <div key={p.id} style={{ background: "white", border: `1px solid ${COLORS.pergamino}`, borderRadius: 4, padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 11, color: "#999", fontFamily: "'Cinzel', serif", minWidth: 18 }}>{idx + 1}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: 13, fontFamily: "'Cinzel', serif", color: COLORS.teal }}>{p.titulo}</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 11, color: "#999", fontStyle: "italic", fontFamily: "'EB Garamond', Georgia, serif" }}>
+                          {tipoLabel(p.tipo)}{p.descripcion ? ` — ${p.descripcion}` : ""}
+                        </p>
+                      </div>
+                      <button onClick={() => handleMovePlantillaItem(p.id, -1)} disabled={idx === 0} title="Subir" style={{ background: "transparent", border: `1px solid ${COLORS.pergamino}`, borderRadius: 2, cursor: "pointer", padding: "2px 8px", fontSize: 12, opacity: idx === 0 ? 0.3 : 1 }}>↑</button>
+                      <button onClick={() => handleMovePlantillaItem(p.id, 1)} disabled={idx === plantilla.length - 1} title="Bajar" style={{ background: "transparent", border: `1px solid ${COLORS.pergamino}`, borderRadius: 2, cursor: "pointer", padding: "2px 8px", fontSize: 12, opacity: idx === plantilla.length - 1 ? 0.3 : 1 }}>↓</button>
+                      <button onClick={() => handleEditPlantillaItem(p)} style={{ background: "transparent", color: COLORS.oro, border: `1px solid ${COLORS.oro}`, padding: "4px 10px", borderRadius: 2, fontSize: 10, fontFamily: "'Cinzel', serif", cursor: "pointer" }}>Editar</button>
+                      <button onClick={() => handleDeletePlantillaItem(p.id)} style={{ background: "transparent", color: "#a32d2d", border: "none", cursor: "pointer", fontSize: 16, padding: "0 4px" }}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Modal>
+            <Modal open={isAplicarModalOpen} onClose={() => setIsAplicarModalOpen(false)} title="Aplicar Plantilla a Academias">
+              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                <select value={aplNivel} onChange={(e) => { setAplNivel(e.target.value); setAplCurso(""); setAplTemasSel([]); }} style={{ flex: 1, padding: "8px 12px", borderRadius: 2, border: `1px solid ${COLORS.pergamino}`, fontSize: 13 }}>
+                  <option value="">Nivel...</option>
+                  {niveles.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
+                </select>
+                <select value={aplCurso} onChange={(e) => { setAplCurso(e.target.value); setAplTemasSel([]); }} style={{ flex: 1, padding: "8px 12px", borderRadius: 2, border: `1px solid ${COLORS.pergamino}`, fontSize: 13 }} disabled={!aplNivel}>
+                  <option value="">{aplNivel ? "Serie..." : "Primero el nivel"}</option>
+                  {allCursosAct.filter(c => c.nivel_id == aplNivel).map(c => <option key={c.id} value={c.id}>{c.titulo}</option>)}
+                </select>
+              </div>
+
+              <p style={{ fontSize: 11, fontFamily: "'Cinzel', serif", color: COLORS.teal, letterSpacing: "1px", margin: "0 0 8px" }}>
+                ACADEMIAS ({aplTemasSel.length} seleccionadas)
+              </p>
+              {!aplCurso ? (
+                <p style={{ fontSize: 12, color: "#999", fontStyle: "italic", fontFamily: "'EB Garamond', Georgia, serif", margin: "0 0 16px" }}>Selecciona un nivel y una serie para ver las academias.</p>
+              ) : (
+                <div style={{ background: "white", border: `1px solid ${COLORS.pergamino}`, borderRadius: 4, padding: "8px 12px", marginBottom: 16, maxHeight: 180, overflowY: "auto" }}>
+                  <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, padding: "5px 0", cursor: "pointer", fontWeight: 600, color: COLORS.teal, borderBottom: `1px solid ${COLORS.pergamino}`, marginBottom: 4 }}>
+                    <input
+                      type="checkbox"
+                      checked={aplTemasSel.length > 0 && aplTemasSel.length === allTemasAct.filter(t => t.curso_id == aplCurso).length}
+                      onChange={(e) => setAplTemasSel(e.target.checked ? allTemasAct.filter(t => t.curso_id == aplCurso).map(t => t.id) : [])}
+                    />
+                    Todas
+                  </label>
+                  {allTemasAct.filter(t => t.curso_id == aplCurso).map(t => (
+                    <label key={t.id} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, padding: "5px 0", cursor: "pointer", color: COLORS.teal, fontFamily: "'EB Garamond', Georgia, serif" }}>
+                      <input type="checkbox" checked={aplTemasSel.includes(t.id)} onChange={() => toggleAplTema(t.id)} />
+                      {t.titulo}
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              <p style={{ fontSize: 11, fontFamily: "'Cinzel', serif", color: COLORS.teal, letterSpacing: "1px", margin: "0 0 8px" }}>
+                ACTIVIDADES DE LA PLANTILLA
+              </p>
+              <div style={{ background: "white", border: `1px solid ${COLORS.pergamino}`, borderRadius: 4, padding: "8px 12px", marginBottom: 16, maxHeight: 180, overflowY: "auto" }}>
+                {plantilla.length === 0 ? (
+                  <p style={{ fontSize: 12, color: "#999", fontStyle: "italic", fontFamily: "'EB Garamond', Georgia, serif" }}>La plantilla está vacía. Defínela primero con el botón "Plantilla".</p>
+                ) : plantilla.map(p => {
+                  const checked = aplActsSel === null ? true : aplActsSel.includes(p.id);
+                  return (
+                    <label key={p.id} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, padding: "5px 0", cursor: "pointer", color: COLORS.teal, fontFamily: "'EB Garamond', Georgia, serif" }}>
+                      <input type="checkbox" checked={checked} onChange={() => toggleAplAct(p.id)} />
+                      <span>{p.titulo} <span style={{ color: "#999", fontStyle: "italic", fontSize: 11 }}>({tipoLabel(p.tipo)})</span></span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <p style={{ fontSize: 11, color: "#999", fontStyle: "italic", fontFamily: "'EB Garamond', Georgia, serif", margin: "0 0 16px" }}>
+                No se duplican: si una academia ya tiene una actividad de ese tipo, se omite.
+              </p>
+
+              {aplResultado?.error && (
+                <p style={{ fontSize: 13, color: "#a32d2d", margin: "0 0 12px", fontFamily: "'EB Garamond', Georgia, serif" }}>{aplResultado.error}</p>
+              )}
+              {aplResultado?.creadas !== undefined && (
+                <p style={{ fontSize: 13, color: "#276749", margin: "0 0 12px", fontStyle: "italic", fontFamily: "'EB Garamond', Georgia, serif" }}>
+                  ✓ Se crearon {aplResultado.creadas} actividades en {aplResultado.academias} academia(s){aplResultado.omitidas > 0 ? ` (${aplResultado.omitidas} omitidas por ya existir)` : ""}.
+                </p>
+              )}
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={handleAplicarPlantilla} disabled={aplicando || aplTemasSel.length === 0 || plantilla.length === 0} style={{ flex: 1, background: COLORS.oro, color: COLORS.teal, border: "none", padding: "10px 0", borderRadius: 2, fontFamily: "'Cinzel', serif", fontSize: 11, fontWeight: 600, letterSpacing: "1px", cursor: (aplicando || aplTemasSel.length === 0) ? "not-allowed" : "pointer", opacity: (aplicando || aplTemasSel.length === 0) ? 0.6 : 1 }}>
+                  {aplicando ? "Creando..." : "Crear actividades"}
+                </button>
+                <button onClick={() => setIsAplicarModalOpen(false)} style={{ flex: 1, background: "transparent", color: COLORS.teal, border: `1px solid ${COLORS.pergamino}`, padding: "10px 0", borderRadius: 2, fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "1px", cursor: "pointer" }}>
+                  Cerrar
+                </button>
               </div>
             </Modal>
           </>
